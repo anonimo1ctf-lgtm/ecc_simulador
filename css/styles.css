@@ -1,0 +1,12 @@
+/* css/styles.css */
+body {
+    font-family: system-ui, -apple-system, sans-serif;
+}
+
+#theory-output {
+    min-height: 100px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    border: 1px dashed #dee2e6;
+}

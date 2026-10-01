@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador Interactivo ECC | Criptografía de Curvas Elípticas</title>
+
+    <!-- 1. Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- 2. KaTeX CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    
+    <!-- 3. JSXGraph CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsxgraph@1.6.2/distrib/jsxgraph.css">
+
+    <!-- Estilos personalizados -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-light">
+
+    <!-- Barra de Navegación -->
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">Simulador ECC <span id="formula-header"></span></span>
+        </div>
+    </nav>
+
+    <!-- Contenedor Principal -->
+    <div class="container-fluid mt-3">
+        <div class="row">
+            
+            <!-- PANEL LATERAL (Módulo 1: Teoría y Controles) -->
+            <div class="col-lg-4 col-md-5 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Parámetros de la Curva</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small">
+                            Define los parámetros para la ecuación de Weierstrass: <br>
+                            <span id="formula-weierstrass"></span>
+                        </p>
+                        
+                        <form id="ecc-form">
+                            <div class="row mb-3">
+                                <div class="col">
+                                    <label for="param-a" class="form-label">Coeficiente <span id="label-a"></span></label>
+                                    <input type="number" class="form-control" id="param-a" value="-1" required>
+                                </div>
+                                <div class="col">
+                                    <label for="param-b" class="form-label">Coeficiente <span id="label-b"></span></label>
+                                    <input type="number" class="form-control" id="param-b" value="1" required>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="param-p" class="form-label">Campo Finito (Primo <span id="label-p"></span>)</label>
+                                <input type="number" class="form-control" id="param-p" value="17" required>
+                                <div class="form-text">Debe ser un número primo.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="protocol-select" class="form-label">Protocolo a Simular</label>
+                                <select class="form-select" id="protocol-select">
+                                    <option value="ecdh">Diffie-Hellman (ECDH)</option>
+                                    <option value="elgamal">ElGamal</option>
+                                    <option value="massey">Massey-Omura</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100">Graficar y Calcular</button>
+                        </form>
+                        
+                        <hr>
+                        
+                        <!-- Área para mostrar teoría dinámica o resultados -->
+                        <div id="theory-output" class="mt-3">
+                            <!-- KaTeX inyectará las fórmulas resultantes aquí -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ÁREA CENTRAL (Módulo 2: Renderizado Geométrico) -->
+            <div class="col-lg-8 col-md-7 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body p-0">
+                        <!-- Contenedor de JSXGraph -->
+                        <!-- IMPORTANTE: El ID 'jxgbox' y la clase son requeridos por la biblioteca -->
+                        <div id="jxgbox" class="jxgbox" style="width: 100%; height: 80vh; min-height: 500px; border-radius: 0.375rem;"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ================= SCRIPTS ================= -->
+    
+    <!-- 1. Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- 2. KaTeX JS & Auto-render -->
+<!-- 2. KaTeX JS & Auto-render -->
+    <script  src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script  src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    
+    <!-- 3. JSXGraph JS -->
+    <script type="text/javascript" charset="UTF-8" src="https://cdn.jsdelivr.net/npm/jsxgraph@1.6.2/distrib/jsxgraphcore.js"></script>
+    
+    <!-- 4. Snap.svg JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/snap.svg/0.5.1/snap.svg-min.js"></script>
+
+    <!-- Lógica de la Aplicación (Módulos personalizados) -->
+    <!-- Se recomienda usar type="module" para importar funciones entre archivos JS -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
