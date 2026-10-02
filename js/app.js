@@ -2,59 +2,141 @@ import { initBoard, drawContinuousCurve, drawDiscretePoints, drawAdditionResult,
 import { renderStaticFormulas, updateWeierstrassEquation, showAdditionResult } from './ui.js';
 import { findPoints, addPoints } from './crypto.js';
 
-// Objeto Global para manejar la navegación desde el HTML
-window.appRouter = {
-    navigateTo: function(topic) {
-        document.getElementById('view-index').classList.add('d-none');
-        document.getElementById('view-simulator').classList.remove('d-none');
-        loadTopicData(topic);
-        
-        // Inicializamos la gráfica solo si no existe
-        if (!document.getElementById('jxgbox').hasChildNodes()) {
-            initBoard('jxgbox');
-            updateAll();
-        }
+// ==========================================
+// 1. BASE DE DATOS DE CONTENIDO (Escalable)
+// ==========================================
+const contentData = {
+    'suma': {
+        title: "1. Fundamentos Matemáticos: Suma de Puntos",
+        subtopics: [
+            {
+                id: 'suma-teoria',
+                title: 'Teoría: Ecuación de Weierstrass',
+                hasSimulator: false,
+                content: `
+                    <p>Una curva elíptica sobre un campo finito $\\mathbb{F}_p$ se define mediante la ecuación de Weierstrass reducida:</p>
+                    <div class="text-center my-3">
+                        $$ y^2 \\equiv x^3 + ax + b \\pmod{p} $$
+                    </div>
+                    <p>Para que la curva no sea singular (es decir, no tenga bucles ni picos), su discriminante debe ser distinto de cero:</p>
+                    <div class="text-center my-3">
+                        $$ 4a^3 + 27b^2 \\not\\equiv 0 \\pmod{p} $$
+                    </div>
+                    <p><em>Nota: Puedes agregar toda la teoría que quieras aquí, el sistema renderizará el LaTeX automáticamente.</em></p>
+                `
+            },
+            {
+                id: 'suma-simulador',
+                title: 'Simulador: Suma Geométrica',
+                hasSimulator: true,
+                content: `
+                    <p>En este simulador puedes interactuar con los puntos discretos generados sobre el campo finito $\\mathbb{F}_p$.</p>
+                    <p><strong>Instrucciones:</strong> Modifica los coeficientes y haz clic en dos puntos de la gráfica para observar la línea secante y el resultado matemático.</p>
+                `
+            }
+        ]
     },
-    navigateHome: function() {
-        document.getElementById('view-simulator').classList.add('d-none');
-        document.getElementById('view-index').classList.remove('d-none');
+    'ecdh': {
+        title: "2. Protocolo Diffie-Hellman (ECDH)",
+        subtopics: [
+            {
+                id: 'ecdh-intro',
+                title: 'Introducción a ECDH',
+                hasSimulator: false,
+                content: '<p>Teoría sobre el intercambio de claves...</p>'
+            },
+            {
+                id: 'ecdh-sim',
+                title: 'Simulación ECDH',
+                hasSimulator: true,
+                content: '<p>Simulador en construcción.</p>'
+            }
+        ]
     }
 };
 
-// Carga la teoría y ajusta la interfaz según el tema elegido
-function loadTopicData(topic) {
-    const theoryContainer = document.getElementById('theory-description');
-    const panelTitle = document.getElementById('panel-title');
+// ==========================================
+// 2. ENRUTADOR Y CONTROL DE VISTAS
+// ==========================================
+window.appRouter = {
+    navigateHome: function() {
+        document.getElementById('view-content').classList.add('d-none');
+        document.getElementById('view-topic-index').classList.add('d-none');
+        document.getElementById('view-main-index').classList.remove('d-none');
+    },
 
-    switch(topic) {
-        case 'suma':
-            panelTitle.innerText = "Suma de Puntos";
-            theoryContainer.innerHTML = `
-                <p class="small text-muted"><strong>Fundamento:</strong> En criptografía de curvas elípticas, la operación fundamental es la suma de puntos. Selecciona dos puntos en la gráfica para visualizar cómo se traza la secante y se obtiene el punto resultante.</p>
-            `;
-            break;
-        case 'ecdh':
-            panelTitle.innerText = "Protocolo ECDH";
-            theoryContainer.innerHTML = `
-                <p class="small text-muted"><strong>ECDH:</strong> Permite a dos partes generar una clave secreta compartida multiplicando un punto base por sus claves privadas. (Simulación en construcción).</p>
-            `;
-            break;
-        case 'elgamal':
-            panelTitle.innerText = "Cifrado ElGamal";
-            theoryContainer.innerHTML = `
-                <p class="small text-muted"><strong>ElGamal:</strong> Cifra un mensaje sumándolo con una clave pública temporal. (Simulación en construcción).</p>
-            `;
-            break;
-        case 'massey':
-            panelTitle.innerText = "Massey-Omura";
-            theoryContainer.innerHTML = `
-                <p class="small text-muted"><strong>Massey-Omura:</strong> Protocolo de tres pasos donde el mensaje viaja cifrado en todo momento. (Simulación en construcción).</p>
-            `;
-            break;
+    navigateToTopic: function(topicKey) {
+        document.getElementById('view-main-index').classList.add('d-none');
+        document.getElementById('view-content').classList.add('d-none');
+        
+        const topic = contentData[topicKey];
+        if (!topic) return;
+
+        document.getElementById('topic-title').innerText = topic.title;
+        
+        // Generar subtemas dinámicamente
+        const listContainer = document.getElementById('subtopic-list');
+        listContainer.innerHTML = '';
+        
+        topic.subtopics.forEach(sub => {
+            const btn = document.createElement('button');
+            btn.className = 'list-group-item list-group-item-action p-3';
+            btn.innerHTML = `<h5 class="mb-1 text-secondary">${sub.title}</h5>`;
+            btn.onclick = () => this.navigateToSubtopic(topicKey, sub);
+            listContainer.appendChild(btn);
+        });
+
+        document.getElementById('view-topic-index').classList.remove('d-none');
+    },
+
+    navigateToSubtopic: function(parentTopicKey, subtopicData) {
+        document.getElementById('view-topic-index').classList.add('d-none');
+        
+        document.getElementById('subtopic-title').innerText = subtopicData.title;
+        document.getElementById('btn-back-topic').onclick = () => this.navigateToTopic(parentTopicKey);
+
+        const theoryContainer = document.getElementById('static-theory-container');
+        theoryContainer.innerHTML = subtopicData.content;
+
+        // Elementos de la interfaz
+        const theoryColumn = document.getElementById('theory-column');
+        const simControls = document.getElementById('simulator-controls');
+        const graphicArea = document.getElementById('graphic-area');
+        
+        if (subtopicData.hasSimulator) {
+            // MODO SIMULADOR: Columna angosta
+            theoryColumn.className = 'col-lg-4 col-md-5 mb-4';
+            simControls.classList.remove('d-none');
+            graphicArea.classList.remove('d-none');
+            
+            if (!document.getElementById('jxgbox').hasChildNodes()) {
+                initBoard('jxgbox');
+                updateAll();
+            }
+        } else {
+            // MODO LECTURA: Columna ancha centrada
+            theoryColumn.className = 'col-lg-8 col-md-10 mx-auto mb-4';
+            simControls.classList.add('d-none');
+            graphicArea.classList.add('d-none');
+        }
+
+        document.getElementById('view-content').classList.remove('d-none');
+
+        if (window.renderMathInElement) {
+            window.renderMathInElement(theoryContainer, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false}
+                ],
+                throwOnError: false
+            });
+        }
     }
-}
+};
 
-// Variables para la lógica interactiva
+// ==========================================
+// 3. LÓGICA DEL SIMULADOR 
+// ==========================================
 let selectedP = null;
 let selectedQ = null;
 let currentA, currentP;
@@ -95,15 +177,28 @@ const updateAll = () => {
     clearAddition();
     showAdditionResult(null, null, null);
 
+    // Actualizamos la fórmula visible en la interfaz
+    updateWeierstrassEquation(currentA, b);
+
     drawContinuousCurve(currentA, b);
     
     const validPoints = findPoints(currentA, b, currentP);
     drawDiscretePoints(validPoints, handlePointClick);
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('ecc-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        updateAll();
-    });
-});
+// Event Listener robusto para el formulario
+const initForm = () => {
+    const form = document.getElementById('ecc-form');
+    if (form) {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            updateAll();
+        });
+    }
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initForm);
+} else {
+    initForm();
+}

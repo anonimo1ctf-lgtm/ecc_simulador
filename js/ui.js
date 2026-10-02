@@ -28,9 +28,20 @@ export function renderStaticFormulas() {
 export function updateWeierstrassEquation(a, b) {
     if (!window.katex) return;
 
-    let eq = "y^2 = x^3 ";
+    // Obtenemos el valor de p directamente del DOM
+    const pInput = document.getElementById('param-p');
+    const p = pInput ? pInput.value : "p";
+
+    // 1. Renderizar Ecuación Estática (Gris, de referencia)
+    const staticEq = "y^2 \\equiv x^3 + ax + b \\pmod{p}";
+    const staticContainer = document.getElementById('formula-static-weierstrass');
+    if (staticContainer) {
+        window.katex.render(staticEq, staticContainer, { throwOnError: false, displayMode: true });
+    }
+
+    // 2. Construir y Renderizar Ecuación Dinámica (Azul, con valores)
+    let eq = "y^2 \\equiv x^3 ";
     
-    // Lógica para formatear el coeficiente 'a' limpiamente
     if (a === 1) {
         eq += "+ x ";
     } else if (a === -1) {
@@ -41,23 +52,24 @@ export function updateWeierstrassEquation(a, b) {
         eq += `- ${Math.abs(a)}x `;
     }
 
-    // Lógica para formatear el coeficiente 'b' limpiamente
     if (b > 0) {
-        eq += `+ ${b}`;
+        eq += `+ ${b} `;
     } else if (b < 0) {
-        eq += `- ${Math.abs(b)}`;
+        eq += `- ${Math.abs(b)} `;
     }
 
-    const container = document.getElementById('formula-weierstrass');
-    
-    if (container) {
+    // Le añadimos el campo finito a la ecuación dinámica
+    eq += `\\pmod{${p}}`;
+
+    const dynamicContainer = document.getElementById('formula-dynamic-weierstrass');
+    if (dynamicContainer) {
         try {
-            window.katex.render(eq, container, { 
+            window.katex.render(eq, dynamicContainer, { 
                 throwOnError: false,
                 displayMode: true 
             });
         } catch (error) {
-            console.error("Error al renderizar la ecuación de Weierstrass:", error);
+            console.error("Error al renderizar la ecuación dinámica:", error);
         }
     }
 }
