@@ -1,6 +1,5 @@
 // js/crypto.js
-
-//Ahora este
+//Es un cambio para probar
 
 /**
  * Función auxiliar para calcular el módulo real matemático.
