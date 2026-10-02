@@ -1,4 +1,6 @@
 // js/app.js
+//Esta es una prueba a ver como es el guardado de los caambios
+
 import { initBoard, drawContinuousCurve, drawDiscretePoints, drawAdditionResult, clearAddition } from './graph.js';
 import { renderStaticFormulas, updateWeierstrassEquation, showAdditionResult } from './ui.js';
 import { findPoints, addPoints } from './crypto.js';

@@ -1,5 +1,7 @@
 // js/crypto.js
 
+//Ahora este
+
 /**
  * Función auxiliar para calcular el módulo real matemático.
  * En JS, el operador % falla con números negativos (-1 % 17 = -1, pero debería ser 16).

@@ -1,5 +1,5 @@
 // js/graph.js
-
+//Y este
 // Mantendremos la referencia global del tablero y los elementos dibujados
 let board = null;
 let currentElements = [];
