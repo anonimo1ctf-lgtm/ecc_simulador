@@ -118,3 +118,33 @@ export function addPoints(P, Q, a, p) {
 
     return [x3, y3];
 }
+
+
+/**
+ * Multiplica un punto P por un escalar k sobre E(F_p) usando el algoritmo Double-and-Add.
+ * @param {Array<number>|null} P - Punto inicial [x, y]
+ * @param {number} k - Escalar (entero positivo / clave privada)
+ * @param {number} a - Coeficiente 'a' de la curva
+ * @param {number} p - Campo finito primo
+ * @returns {Array<number>|null} Punto resultante [x, y] o null si cae al Infinito (O)
+ */
+export function multiplyPoint(P, k, a, p) {
+    if (!P || k <= 0) return null;
+
+    let result = null; // Representa el Punto al Infinito (Elemento Neutro)
+    let addend = P;
+    let scalar = Math.floor(k);
+
+    while (scalar > 0) {
+        // Si el bit menos significativo es 1, sumamos
+        if (scalar % 2 === 1) {
+            result = addPoints(result, addend, a, p);
+        }
+        // Duplicamos el punto para la siguiente posición binaria
+        addend = addPoints(addend, addend, a, p);
+        // Desplazamos los bits a la derecha
+        scalar = Math.floor(scalar / 2);
+    }
+
+    return result;
+}

@@ -161,3 +161,77 @@ export function drawAdditionResult(P, Q, R) {
 
     board.unsuspendUpdate();
 }
+
+// Almacena los elementos visuales creados para ECDH
+let ecdhElements = [];
+
+/**
+ * Limpia las marcas de ECDH en el tablero.
+ */
+export function clearECDH() {
+    if (typeof board !== 'undefined' && board) {
+        ecdhElements.forEach(el => board.removeObject(el));
+    }
+    ecdhElements = [];
+}
+
+/**
+ * Dibuja y resalta en la gráfica los puntos clave de ECDH con colores distintivos.
+ */
+export function drawECDHPoints(G, QA, QB, K) {
+    clearECDH();
+    if (!board) return;
+
+    // 1. Punto Base G (Naranja)
+    if (G) {
+        let pG = board.create('point', [G[0], G[1]], {
+            name: 'G (Base)',
+            size: 8,                  // Un poco más grande para que sobresalga
+            fillColor: '#ffc107',     // Amarillo puro
+            strokeColor: '#000000',   // Borde negro para máximo contraste
+            strokeWidth: 2,
+            fixed: true,
+            label: { offset: [10, 10], color: '#d39e00' }
+        });
+        ecdhElements.push(pG);
+    }
+
+    // 2. Clave Pública QA - Alice (Púrpura)
+    if (QA) {
+        let pQA = board.create('point', [QA[0], QA[1]], {
+            name: 'Q_A (Alice)',
+            size: 6,
+            fillColor: '#6f42c1',
+            strokeColor: '#3c1880',
+            fixed: true,
+            label: { offset: [-25, -15], color: '#6f42c1' }
+        });
+        ecdhElements.push(pQA);
+    }
+
+    // 3. Clave Pública QB - Bob (Cian)
+    if (QB) {
+        let pQB = board.create('point', [QB[0], QB[1]], {
+            name: 'Q_B (Bob)',
+            size: 6,
+            fillColor: '#0dcaf0',
+            strokeColor: '#087990',
+            fixed: true,
+            label: { offset: [10, -15], color: '#0dcaf0' }
+        });
+        ecdhElements.push(pQB);
+    }
+
+    // 4. Secreto Compartido K (Verde)
+    if (K) {
+        let pK = board.create('point', [K[0], K[1]], {
+            name: 'K (Secreto)',
+            size: 7,
+            fillColor: '#198754',
+            strokeColor: '#0a3622',
+            fixed: true,
+            label: { offset: [0, 18], color: '#198754' }
+        });
+        ecdhElements.push(pK);
+    }
+}

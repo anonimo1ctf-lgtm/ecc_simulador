@@ -111,3 +111,57 @@ export function showAdditionResult(P, Q, R) {
         console.error("Error al renderizar la suma:", error);
     }
 }
+
+/**
+ * Muestra los resultados de la simulación del protocolo ECDH.
+ */
+/**
+ * Muestra los resultados del protocolo ECDH con etiquetas de color coincidentes con la gráfica.
+ */
+export function showECDHResult(G, dA, dB, QA, QB, KA, KB) {
+    const container = document.getElementById('theory-output');
+    if (!window.katex || !container) return;
+
+    if (!G || !QA || !QB || !KA || !KB) {
+        container.innerHTML = '<div class="alert alert-warning text-center mt-2 p-2">Selecciona un punto base válido y claves privadas mayores a 0.</div>';
+        return;
+    }
+
+    const gStr = `(${G[0]}, ${G[1]})`;
+    const qaStr = `(${QA[0]}, ${QA[1]})`;
+    const qbStr = `(${QB[0]}, ${QB[1]})`;
+    const kaStr = `(${KA[0]}, ${KA[1]})`;
+
+    container.innerHTML = `
+        <div class="card card-body bg-light mt-3 p-2 small">
+            <!-- Leyenda de colores de la gráfica -->
+            <div class="d-flex flex-wrap gap-1 mb-2 justify-content-center">
+                <span class="badge" style="background-color: #ffc107; color: #000;">Punto G</span>
+                <span class="badge" style="background-color: #6f42c1;">Q_A (Alice)</span>
+                <span class="badge" style="background-color: #0dcaf0; color: #000;">Q_B (Bob)</span>
+                <span class="badge" style="background-color: #198754;">K (Secreto)</span>
+            </div>
+
+            <h6 class="text-primary border-bottom pb-1 mb-2">1. Claves Públicas Generadas</h6>
+            <div id="katex-ecdh-alice" class="mb-1"></div>
+            <div id="katex-ecdh-bob" class="mb-2"></div>
+            
+            <h6 class="text-success border-bottom pb-1 my-2">2. Secreto Compartido Derivado</h6>
+            <div id="katex-ecdh-secret-a" class="mb-1"></div>
+            <div id="katex-ecdh-secret-b" class="mb-2"></div>
+
+            <div class="alert alert-success mt-2 mb-0 py-1 px-2 text-center fw-bold">
+                ¡Clave Secreta Coincidente! $K_A = K_B = ${kaStr}$
+            </div>
+        </div>
+    `;
+
+    try {
+        window.katex.render(`Alice: Q_A = ${dA} \\cdot ${gStr} = ${qaStr}`, document.getElementById('katex-ecdh-alice'), { throwOnError: false });
+        window.katex.render(`Bob: Q_B = ${dB} \\cdot ${gStr} = ${qbStr}`, document.getElementById('katex-ecdh-bob'), { throwOnError: false });
+        window.katex.render(`K_A = ${dA} \\cdot Q_B = ${kaStr}`, document.getElementById('katex-ecdh-secret-a'), { throwOnError: false });
+        window.katex.render(`K_B = ${dB} \\cdot Q_A = ${kaStr}`, document.getElementById('katex-ecdh-secret-b'), { throwOnError: false });
+    } catch (e) {
+        console.error("Error al renderizar los resultados ECDH con KaTeX:", e);
+    }
+}
