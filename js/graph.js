@@ -1,5 +1,4 @@
 // js/graph.js
-//Y este
 // Mantendremos la referencia global del tablero y los elementos dibujados
 let board = null;
 let currentElements = [];
@@ -84,7 +83,6 @@ export function drawContinuousCurve(a, b) {
  * (Placeholder) Función para dibujar los puntos discretos del campo finito F_p.
  * La conectaremos con crypto.js más adelante.
  */
-// Reemplaza drawDiscretePoints y añade lo siguiente en js/graph.js
 
 let discretePoints = []; 
 let additionElements = []; // Guardará las líneas y puntos de la suma

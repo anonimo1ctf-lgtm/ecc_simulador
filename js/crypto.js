@@ -1,5 +1,4 @@
 // js/crypto.js
-//Es un cambio para probar
 
 /**
  * Función auxiliar para calcular el módulo real matemático.
@@ -40,12 +39,12 @@ export function findPoints(a, b, p) {
     return points;
 }
 
-// Agrega esto al final de js/crypto.js
 
 /**
  * Calcula el inverso multiplicativo modular usando el Algoritmo Extendido de Euclides.
  * Resuelve: (a * x) ≡ 1 (mod m)
  */
+
 export function modInverse(a, m) {
     let m0 = m;
     let y = 0, x = 1;
@@ -99,6 +98,9 @@ export function addPoints(P, Q, a, p) {
 
     let m;
     if (x1 === x2 && y1 === y2) {
+        // Si y1 === 0, la recta tangente es vertical y el punto resultante es el punto al infinito
+        if (y1 === 0) return null;
+
         // Regla de Duplicación (P = Q): Tangente a la curva
         // m = (3x^2 + a) / (2y) mod p
         let num = mod(3 * Math.pow(x1, 2) + a, p);

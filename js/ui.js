@@ -74,7 +74,6 @@ export function updateWeierstrassEquation(a, b) {
     }
 }
 
-// Añade esto al final de js/ui.js
 
 /**
  * Muestra el resultado de la suma de puntos en el panel de teoría.
@@ -115,9 +114,7 @@ export function showAdditionResult(P, Q, R) {
 /**
  * Muestra los resultados de la simulación del protocolo ECDH.
  */
-/**
- * Muestra los resultados del protocolo ECDH con etiquetas de color coincidentes con la gráfica.
- */
+
 export function showECDHResult(G, dA, dB, QA, QB, KA, KB) {
     const container = document.getElementById('theory-output');
     if (!window.katex || !container) return;

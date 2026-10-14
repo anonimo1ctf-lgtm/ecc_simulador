@@ -95,9 +95,8 @@ const contentData = {
     }
 };
 
-// 
+
 // 2. Enrutador y control de vistas
-// 
 let currentSubtopicId = null;
 
 window.appRouter = {
