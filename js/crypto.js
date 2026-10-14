@@ -17,13 +17,39 @@ export function mod(n, p) {
  * @param {number} p - Número primo (módulo)
  * @returns {Array} Un arreglo de coordenadas [[x1, y1], [x2, y2], ...]
  */
+export function isPrime(n) {
+    if (!Number.isSafeInteger(n) || n < 2) return false;
+    for (let d = 2; d * d <= n; d++) if (n % d === 0) return false;
+    return true;
+}
+
+function validateField(p) {
+    if (!Number.isSafeInteger(p) || p <= 3 || p > 211 || !isPrime(p)) {
+        throw new RangeError('El campo p debe ser primo, mayor que 3 y como máximo 211.');
+    }
+}
+
+export function validateCurve(a, b, p) {
+    validateField(p);
+    if (!Number.isSafeInteger(a) || !Number.isSafeInteger(b)) {
+        throw new RangeError('Los coeficientes a y b deben ser enteros.');
+    }
+    const aa = mod(a, p), bb = mod(b, p);
+    if (mod(4 * aa ** 3 + 27 * bb ** 2, p) === 0) {
+        throw new RangeError('Curva singular: 4a³ + 27b² es cero módulo p.');
+    }
+    return true;
+}
+
 export function findPoints(a, b, p) {
+    validateCurve(a, b, p);
+    const aa = mod(a, p), bb = mod(b, p);
     const points = [];
 
     // Iteramos sobre todos los valores posibles de x (de 0 a p-1)
     for (let x = 0; x < p; x++) {
         // Lado derecho de la ecuación: x^3 + ax + b (mod p)
-        let rhs = mod(Math.pow(x, 3) + (a * x) + b, p);
+        let rhs = mod(Math.pow(x, 3) + (aa * x) + bb, p);
 
         // Iteramos sobre todos los valores posibles de y (de 0 a p-1)
         // Buscamos si existe algún y tal que y^2 ≡ rhs (mod p)
@@ -46,33 +72,18 @@ export function findPoints(a, b, p) {
  */
 
 export function modInverse(a, m) {
-    let m0 = m;
-    let y = 0, x = 1;
-
-    if (m === 1) return 0;
-
-    // Aseguramos que 'a' esté dentro del rango positivo del módulo
-    let a_mod = mod(a, m); 
-
-    while (a_mod > 1) {
-        // División entera
-        let q = Math.floor(a_mod / m);
-        let t = m;
-
-        // Paso del algoritmo de Euclides
-        m = a_mod % m;
-        a_mod = t;
-        t = y;
-
-        // Actualizamos x y y
-        y = x - q * y;
-        x = t;
+    if (!Number.isSafeInteger(a) || !Number.isSafeInteger(m) || m <= 1) {
+        throw new RangeError('El inverso modular requiere enteros y módulo mayor que 1.');
     }
-
-    // Aseguramos que el resultado sea positivo
-    if (x < 0) x += m0;
-    
-    return x;
+    let oldR = mod(a, m), r = m;
+    let oldT = 1, t = 0;
+    while (r !== 0) {
+        const q = Math.floor(oldR / r);
+        [oldR, r] = [r, oldR - q * r];
+        [oldT, t] = [t, oldT - q * t];
+    }
+    if (oldR !== 1) throw new RangeError('No existe inverso modular (MCD distinto de 1).');
+    return mod(oldT, m);
 }
 
 /**
@@ -84,6 +95,15 @@ export function modInverse(a, m) {
  * @returns {Array|null} El punto resultante R [x3, y3], o null si es el punto al infinito O
  */
 export function addPoints(P, Q, a, p) {
+    validateField(p);
+    if (!Number.isSafeInteger(a)) throw new RangeError('Coeficiente a inválido.');
+    for (const point of [P, Q]) {
+        if (point !== null &&
+            (!Array.isArray(point) || point.length !== 2 ||
+             !point.every(v => Number.isSafeInteger(v) && v >= 0 && v < p))) {
+            throw new RangeError('Las coordenadas deben ser enteros entre 0 y p-1.');
+        }
+    }
     // Regla de Identidad: P + O = P
     if (P === null) return Q;
     if (Q === null) return P;
@@ -103,7 +123,7 @@ export function addPoints(P, Q, a, p) {
 
         // Regla de Duplicación (P = Q): Tangente a la curva
         // m = (3x^2 + a) / (2y) mod p
-        let num = mod(3 * Math.pow(x1, 2) + a, p);
+        let num = mod(3 * Math.pow(x1, 2) + mod(a, p), p);
         let den = modInverse(2 * y1, p);
         m = mod(num * den, p);
     } else {
@@ -131,7 +151,11 @@ export function addPoints(P, Q, a, p) {
  * @returns {Array<number>|null} Punto resultante [x, y] o null si cae al Infinito (O)
  */
 export function multiplyPoint(P, k, a, p) {
-    if (!P || k <= 0) return null;
+    validateField(p);
+    if (!Number.isSafeInteger(k) || k < 0) {
+        throw new RangeError('El escalar debe ser un entero no negativo.');
+    }
+    if (!P || k === 0) return null;
 
     let result = null; // Representa el Punto al Infinito (Elemento Neutro)
     let addend = P;
