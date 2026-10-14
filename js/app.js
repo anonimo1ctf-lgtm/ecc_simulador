@@ -1,6 +1,6 @@
-import { initBoard, drawContinuousCurve, drawDiscretePoints, drawAdditionResult, clearAddition, drawECDHPoints, clearECDH } from './graph.js';
+import { initBoard, drawContinuousCurve, drawDiscretePoints, drawAdditionResult, clearAddition, drawECDHPoints, clearECDH, setFieldViewport } from './graph.js';
 import { renderStaticFormulas, updateWeierstrassEquation, showAdditionResult, showECDHResult } from './ui.js';
-import { findPoints, addPoints, multiplyPoint } from './crypto.js';
+import { findPoints, addPoints, multiplyPoint, validateCurve } from './crypto.js';
 
 // 1. Datos
 const contentData = {
@@ -138,6 +138,7 @@ window.appRouter = {
 
         const theoryContainer = document.getElementById('static-theory-container');
         theoryContainer.innerHTML = subtopicData.content;
+        document.getElementById('view-content').classList.remove('d-none');
 
         const theoryColumn = document.getElementById('theory-column');
         const simControls = document.getElementById('simulator-controls');
@@ -247,6 +248,12 @@ const runECDHSimulation = () => {
     const dA = inputDa.valueAsNumber;
     const dB = inputDb.valueAsNumber;
     const G = selectedP;
+    if (!Number.isSafeInteger(dA) || dA <= 0 || !Number.isSafeInteger(dB) || dB <= 0) {
+        clearECDH();
+        document.getElementById('theory-output').textContent =
+            'Las claves privadas deben ser enteros positivos.';
+        return;
+    }
 
     // Aritmética ECDH usando multiplicación escalar k * P
     const QA = multiplyPoint(G, dA, currentA, currentP);
@@ -271,6 +278,17 @@ const updateAll = () => {
     currentA = inputA.valueAsNumber;
     const b = inputB.valueAsNumber;
     currentP = inputP.valueAsNumber;
+    try {
+        validateCurve(currentA, b, currentP);
+    } catch (error) {
+        selectedP = null;
+        selectedQ = null;
+        clearAddition();
+        clearECDH();
+        drawDiscretePoints([], handlePointClick);
+        document.getElementById('theory-output').textContent = error.message;
+        return;
+    }
 
     selectedP = null;
     selectedQ = null;
@@ -280,6 +298,7 @@ const updateAll = () => {
     clearECDH(); 
 
     updateWeierstrassEquation(currentA, b);
+    setFieldViewport(currentP);
     drawContinuousCurve(currentA, b);
     
     const validPoints = findPoints(currentA, b, currentP);
