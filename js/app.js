@@ -2,9 +2,7 @@ import { initBoard, drawContinuousCurve, drawDiscretePoints, drawAdditionResult,
 import { renderStaticFormulas, updateWeierstrassEquation, showAdditionResult, showECDHResult } from './ui.js';
 import { findPoints, addPoints, multiplyPoint } from './crypto.js';
 
-// ==========================================
-// 1. BASE DE DATOS DE CONTENIDO
-// ==========================================
+// 1. Datos
 const contentData = {
     'suma': {
         title: "1. Fundamentos Matemáticos: Suma de Puntos",
@@ -97,9 +95,9 @@ const contentData = {
     }
 };
 
-// ==========================================
-// 2. ENRUTADOR Y CONTROL DE VISTAS
-// ==========================================
+// 
+// 2. Enrutador y control de vistas
+// 
 let currentSubtopicId = null;
 
 window.appRouter = {
@@ -204,9 +202,8 @@ function setupProtocolControls(subtopicId) {
     }
 }
 
-// ==========================================
-// 3. LÓGICA DEL SIMULADOR
-// ==========================================
+
+// Logica del simulador
 let selectedP = null;
 let selectedQ = null;
 let currentA, currentP;
