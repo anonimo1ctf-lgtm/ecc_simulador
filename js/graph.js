@@ -34,6 +34,11 @@ export function initBoard(containerId) {
  * @param {number} a - Coeficiente 'a' de la curva
  * @param {number} b - Coeficiente 'b' de la curva
  */
+export function setFieldViewport(p) {
+    if (!board) return;
+    board.setBoundingBox([-1, p, p, -1], true);
+}
+
 export function drawContinuousCurve(a, b) {
     if (!board) {
         console.error("El plano no ha sido inicializado. Llama a initBoard primero.");
