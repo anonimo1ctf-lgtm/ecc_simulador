@@ -1,3 +1,4 @@
+import { mod, modInverse } from './crypto.js';
 // js/ui.js
 
 /**
@@ -78,7 +79,7 @@ export function updateWeierstrassEquation(a, b) {
 /**
  * Muestra el resultado de la suma de puntos en el panel de teoría.
  */
-export function showAdditionResult(P, Q, R) {
+export function showAdditionResult(P, Q, R, a, p) {
     const container = document.getElementById('theory-output');
     if (!window.katex || !container) return;
 
@@ -109,6 +110,65 @@ export function showAdditionResult(P, Q, R) {
     } catch (error) {
         console.error("Error al renderizar la suma:", error);
     }
+
+    // Mostrar el procedimiento de suma de puntos.
+    const detalle = document.createElement('div');
+    detalle.className = 'alert alert-info mt-3 small';
+    detalle.style.whiteSpace = 'pre-line';
+
+    // Caso especial: resultado al infinito.
+    if (R === null) {
+        detalle.textContent =
+            "Resultado: punto al infinito (O).\n" +
+            "Los puntos son opuestos o la tangente es vertical.";
+
+        container.appendChild(detalle);
+        return;
+    }
+
+    const [x1, y1] = P;
+    const [x2, y2] = Q;
+
+    const duplicacion = x1 === x2 && y1 === y2;
+
+    // Calcular numerador y denominador.
+    const numerador = duplicacion
+        ? mod(3 * x1 * x1 + a, p)
+        : mod(y2 - y1, p);
+
+    const denominador = duplicacion
+        ? mod(2 * y1, p)
+        : mod(x2 - x1, p);
+
+    // Inverso modular del denominador.
+    const inverso = modInverse(denominador, p);
+
+    // Pendiente modular.
+    const lambda = mod(numerador * inverso, p);
+
+    // Coordenadas resultantes.
+    const x3 = mod(lambda * lambda - x1 - x2, p);
+    const y3 = mod(lambda * (x1 - x3) - y1, p);
+
+    detalle.textContent = [
+        duplicacion
+            ? "PROCEDIMIENTO: DUPLICACIÓN DE PUNTO"
+            : "PROCEDIMIENTO: SUMA DE PUNTOS",
+
+        "",
+        "1. Numerador modular = " + numerador,
+        "2. Denominador modular = " + denominador,
+        "3. Inverso modular = " + inverso,
+        "4. Pendiente λ = " + lambda,
+        "",
+        "5. Coordenada x₃ = " + x3,
+        "6. Coordenada y₃ = " + y3,
+        "",
+        "Resultado: R = (" + x3 + ", " + y3 + ")"
+    ].join('\n');
+
+    container.appendChild(detalle);
+
 }
 
 /**

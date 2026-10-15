@@ -1,6 +1,6 @@
 import { initBoard, drawContinuousCurve, drawDiscretePoints, drawAdditionResult, clearAddition, drawECDHPoints, clearECDH } from './graph.js';
 import { renderStaticFormulas, updateWeierstrassEquation, showAdditionResult, showECDHResult } from './ui.js';
-import { findPoints, addPoints, multiplyPoint } from './crypto.js';
+import { findPoints, addPoints, multiplyPoint, validateCurve } from './crypto.js';
 
 // 1. Datos
 const contentData = {
@@ -206,8 +206,11 @@ function setupProtocolControls(subtopicId) {
 let selectedP = null;
 let selectedQ = null;
 let currentA, currentP;
+let parametrosValidos = false;
 
 const handlePointClick = (coord) => {
+    if (!parametrosValidos) return;
+
     if (currentSubtopicId === 'ecdh-sim') {
         // En ECDH, el clic establece el Punto Base G
         selectedP = coord;
@@ -226,7 +229,7 @@ const handlePointClick = (coord) => {
         }
         if (selectedP && selectedQ) {
             let R = addPoints(selectedP, selectedQ, currentA, currentP);
-            showAdditionResult(selectedP, selectedQ, R);
+            showAdditionResult(selectedP, selectedQ, R, currentA, currentP);
             drawAdditionResult(selectedP, selectedQ, R);
         } else {
             showAdditionResult(selectedP, null, null);
@@ -268,9 +271,38 @@ const updateAll = () => {
     
     if (!inputA || !inputB || !inputP) return;
 
-    currentA = inputA.valueAsNumber;
+
+    // Leer parámetros introducidos por el usuario.
+    const a = inputA.valueAsNumber;
     const b = inputB.valueAsNumber;
-    currentP = inputP.valueAsNumber;
+    const p = inputP.valueAsNumber;
+
+    // Validar la curva antes de realizar operaciones.
+    try {
+        validateCurve(a, b, p);
+    } catch (error) {
+        parametrosValidos = false;
+
+        const salida = document.getElementById('theory-output');
+
+        salida.textContent =
+            "Parámetros inválidos: " + error.message +
+            " Se conserva la gráfica anterior, pero la selección " +
+            "de puntos queda deshabilitada hasta corregir los valores.";
+
+        salida.classList.add('text-danger');
+
+        return;
+    }
+
+    // Si la validación fue correcta, actualizar parámetros.
+    currentA = a;
+    currentP = p;
+    parametrosValidos = true;
+
+    document.getElementById('theory-output')
+        .classList.remove('text-danger');
+
 
     selectedP = null;
     selectedQ = null;

@@ -1,0 +1,139 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Pruebas matemáticas ECC</title>
+</head>
+<body>
+    <h2>Pruebas de modInverse()</h2>
+
+    <pre id="resultado">Ejecutando pruebas...</pre>
+
+    <script type="module">
+        import { modInverse, isPrime, validateCurve, findPoints } from './js/crypto.js';
+
+        const salida = document.getElementById('resultado');
+
+        let aprobadas = 0;
+        let total = 0;
+        let reporte = '';
+
+        function probar(nombre, prueba) {
+            total++;
+
+            try {
+                if (prueba()) {
+                    aprobadas++;
+                    reporte += '✅ CORRECTO: ' + nombre + '\n';
+                } else {
+                    reporte += '❌ ERROR: ' + nombre + '\n';
+                }
+            } catch (error) {
+                reporte += '❌ ERROR: ' + nombre +
+                           ' - ' + error.message + '\n';
+            }
+        }
+
+        // Prueba 1: inverso en campo primo.
+        probar('Inverso de 3 módulo 17', () => {
+            return modInverse(3, 17) === 6;
+        });
+
+        // Prueba 2: inverso en módulo compuesto.
+        probar('Inverso de 3 módulo 14', () => {
+            return modInverse(3, 14) === 5;
+        });
+
+        // Prueba 3: inverso inexistente.
+        probar('El 2 no tiene inverso módulo 14', () => {
+            try {
+                modInverse(2, 14);
+                return false;
+            } catch (error) {
+                return error instanceof RangeError;
+            }
+        });
+
+        // Prueba 4: el cero no tiene inverso.
+        probar('El 0 no tiene inverso módulo 17', () => {
+            try {
+                modInverse(0, 17);
+                return false;
+            } catch (error) {
+                return error instanceof RangeError;
+            }
+        });
+
+// Prueba 5: verificar número primo.
+probar('17 es primo', () => {
+    return isPrime(17) === true;
+});
+
+// Prueba 6: verificar número compuesto.
+probar('15 no es primo', () => {
+    return isPrime(15) === false;
+});
+
+// Prueba 7: curva válida.
+probar('Curva válida: a=-1, b=1, p=17', () => {
+    return validateCurve(-1, 1, 17) === true;
+});
+
+// Prueba 8: campo no primo.
+probar('Rechazar campo p=15', () => {
+    try {
+        validateCurve(-1, 1, 15);
+        return false;
+    } catch (error) {
+        return error instanceof RangeError;
+    }
+});
+
+// Prueba 9: curva singular.
+probar('Rechazar curva singular', () => {
+    try {
+        validateCurve(0, 0, 17);
+        return false;
+    } catch (error) {
+        return error instanceof RangeError;
+    }
+});
+
+
+
+// Prueba 10: cantidad correcta de puntos.
+probar('Curva válida genera 13 puntos', () => {
+    const puntos = findPoints(-1, 1, 17);
+    return puntos.length === 13;
+});
+
+// Prueba 11: rechazar campo compuesto.
+probar('findPoints rechaza p=15', () => {
+    try {
+        findPoints(-1, 1, 15);
+        return false;
+    } catch (error) {
+        return error instanceof RangeError;
+    }
+});
+
+// Prueba 12: rechazar curva singular.
+probar('findPoints rechaza curva singular', () => {
+    try {
+        findPoints(0, 0, 17);
+        return false;
+    } catch (error) {
+        return error instanceof RangeError;
+    }
+});
+
+
+        reporte += '\nRESULTADO: ' +
+                   aprobadas + '/' + total +
+                   ' pruebas aprobadas';
+
+        salida.textContent = reporte;
+    </script>
+</body>
+</html>
