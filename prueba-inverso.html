@@ -17,7 +17,11 @@
     validateCurve,
     findPoints,
     multiplyPoint,
-    pointOrder
+    pointOrder,
+    negatePoint,
+    addPoints,
+    encryptElGamal,
+    decryptElGamal
 } from './js/crypto.js';
 
         const salida = document.getElementById('resultado');
@@ -212,6 +216,171 @@ probar('Rechazar escalares decimales y negativos', () => {
 
     return decimalRechazado && negativoRechazado;
 });
+
+
+// Prueba 21: punto opuesto.
+probar('Opuesto de (0,1) es (0,16)', () => {
+    const N = negatePoint([0, 1], 17);
+    return N[0] === 0 && N[1] === 16;
+});
+
+// Prueba 22: sumar puntos opuestos.
+probar('P + (-P) produce el infinito', () => {
+    const P = [0, 1];
+    const N = negatePoint(P, 17);
+    return addPoints(P, N, -1, 17) === null;
+});
+
+// Prueba 23: punto con coordenada y=0.
+probar('(12,0) es su propio opuesto', () => {
+    const N = negatePoint([12, 0], 17);
+    return N[0] === 12 && N[1] === 0;
+});
+
+// Prueba 24: opuesto del infinito.
+probar('El infinito es su propio opuesto', () => {
+    return negatePoint(null, 17) === null;
+});
+
+// Prueba 25: rechazar coordenadas incorrectas.
+probar('Rechazar coordenadas fuera del campo', () => {
+    try {
+        negatePoint([17, 1], 17);
+        return false;
+    } catch (error) {
+        return error instanceof RangeError;
+    }
+});
+
+
+// Prueba 26: cifrado ElGamal correcto.
+probar('ElGamal: cifrado produce C1 y C2 correctos', () => {
+    const G = [0, 1];
+    const Q = multiplyPoint(G, 3, -1, 17);
+    const M = [1, 1];
+
+    const { C1, C2 } = encryptElGamal(
+        M, G, Q, 2, -1, 1, 17
+    );
+
+    return C1[0] === 13 && C1[1] === 14 &&
+           C2[0] === 0 && C2[1] === 1;
+});
+
+// Prueba 27: rechazar k fuera del rango.
+probar('ElGamal: rechazar k=14', () => {
+    const G = [0, 1];
+    const Q = multiplyPoint(G, 3, -1, 17);
+
+    try {
+        encryptElGamal(
+            [1, 1], G, Q, 14, -1, 1, 17
+        );
+        return false;
+    } catch (error) {
+        return error instanceof RangeError;
+    }
+});
+
+// Prueba 28: rechazar mensaje fuera de la curva.
+probar('ElGamal: rechazar mensaje inválido', () => {
+    const G = [0, 1];
+    const Q = multiplyPoint(G, 3, -1, 17);
+
+    try {
+        encryptElGamal(
+            [2, 2], G, Q, 2, -1, 1, 17
+        );
+        return false;
+    } catch (error) {
+        return error instanceof RangeError;
+    }
+});
+
+// Prueba 29: C2 puede ser el punto al infinito.
+probar('ElGamal: C2 puede ser infinito', () => {
+    const G = [0, 1];
+    const Q = multiplyPoint(G, 3, -1, 17);
+
+    const { C1, C2 } = encryptElGamal(
+        [3, 12], G, Q, 2, -1, 1, 17
+    );
+
+    return C1[0] === 13 &&
+           C1[1] === 14 &&
+           C2 === null;
+});
+
+
+
+// Prueba 30: recuperar el mensaje original.
+probar('ElGamal: descifrado recupera M', () => {
+    const G = [0, 1];
+    const d = 3;
+    const Q = multiplyPoint(G, d, -1, 17);
+    const M = [1, 1];
+
+    const { C1, C2 } = encryptElGamal(
+        M, G, Q, 2, -1, 1, 17
+    );
+
+    const recuperado = decryptElGamal(
+        C1, C2, G, d, -1, 1, 17
+    );
+
+    return recuperado !== null &&
+           recuperado[0] === M[0] &&
+           recuperado[1] === M[1];
+});
+
+// Prueba 31: descifrar cuando C2 es infinito.
+probar('ElGamal: descifrar C2 infinito', () => {
+    const G = [0, 1];
+    const d = 3;
+    const Q = multiplyPoint(G, d, -1, 17);
+    const M = [3, 12];
+
+    const { C1, C2 } = encryptElGamal(
+        M, G, Q, 2, -1, 1, 17
+    );
+
+    const recuperado = decryptElGamal(
+        C1, C2, G, d, -1, 1, 17
+    );
+
+    return C2 === null &&
+           recuperado !== null &&
+           recuperado[0] === 3 &&
+           recuperado[1] === 12;
+});
+
+// Prueba 32: rechazar clave privada fuera de rango.
+probar('ElGamal: rechazar clave privada inválida', () => {
+    try {
+        decryptElGamal(
+            [13, 14], [0, 1], [0, 1],
+            14, -1, 1, 17
+        );
+        return false;
+    } catch (error) {
+        return error instanceof RangeError;
+    }
+});
+
+// Prueba 33: rechazar componente C1 inválida.
+probar('ElGamal: rechazar C1 fuera de la curva', () => {
+    try {
+        decryptElGamal(
+            [2, 2], [0, 1], [0, 1],
+            3, -1, 1, 17
+        );
+        return false;
+    } catch (error) {
+        return error instanceof RangeError;
+    }
+});
+
+
 
 
         reporte += '\nRESULTADO: ' +

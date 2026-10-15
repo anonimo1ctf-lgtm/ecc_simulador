@@ -286,3 +286,154 @@ export function pointOrder(P, a, b, p) {
         "No se pudo determinar el orden del punto."
     );
 }
+
+
+/**
+ * Calcula el punto opuesto de P en un campo finito.
+ * Si P = (x,y), entonces -P = (x, -y mod p).
+ * El punto al infinito es su propio opuesto.
+ */
+export function negatePoint(P, p) {
+    if (!Number.isSafeInteger(p) ||
+        p <= 3 || p > 211 || !isPrime(p)) {
+        throw new RangeError(
+            "El módulo debe ser primo, mayor que 3 y máximo 211."
+        );
+    }
+
+    if (P === null) {
+        return null;
+    }
+
+    if (!Array.isArray(P) || P.length !== 2 ||
+        !P.every(v => Number.isSafeInteger(v) &&
+                      v >= 0 && v < p)) {
+        throw new RangeError(
+            "El punto debe tener coordenadas enteras en Fp."
+        );
+    }
+
+    return [P[0], mod(-P[1], p)];
+}
+
+
+/**
+ * Cifra un punto M mediante ElGamal elíptico.
+ *
+ * G: punto base
+ * Q: clave pública del destinatario (Q = dG)
+ * k: escalar temporal de cifrado
+ *
+ * Devuelve el par cifrado (C1, C2).
+ */
+export function encryptElGamal(M, G, Q, k, a, b, p) {
+
+    // Validar la curva.
+    validateCurve(a, b, p);
+
+    // Validar G y obtener su orden.
+    const n = pointOrder(G, a, b, p);
+
+    if (n <= 2) {
+        throw new RangeError(
+            "El punto base debe tener orden mayor que 2."
+        );
+    }
+
+    // Validar el escalar temporal k.
+    if (!Number.isSafeInteger(k) || k < 1 || k >= n) {
+        throw new RangeError(
+            "El escalar k debe ser un entero entre 1 y " +
+            (n - 1) + "."
+        );
+    }
+
+    // Verificar que M y Q pertenezcan a la curva.
+    pointOrder(M, a, b, p);
+    pointOrder(Q, a, b, p);
+
+    // Primera componente: C1 = kG.
+    const C1 = multiplyPoint(G, k, a, p);
+
+    // Secreto temporal: S = kQ.
+    const S = multiplyPoint(Q, k, a, p);
+
+    if (C1 === null || S === null) {
+        throw new RangeError(
+            "El cifrado produjo un secreto temporal " +
+            "en el punto al infinito. Selecciona otro k."
+        );
+    }
+
+    // Segunda componente: C2 = M + S.
+    const C2 = addPoints(M, S, a, p);
+
+    return { C1, C2 };
+}
+
+
+/**
+ * Descifra un mensaje ElGamal elíptico.
+ *
+ * C1, C2: componentes del mensaje cifrado.
+ * G: punto base utilizado en el cifrado.
+ * d: clave privada del destinatario.
+ *
+ * Devuelve el punto original M.
+ */
+export function decryptElGamal(C1, C2, G, d, a, b, p) {
+
+    // 1. Validar los parámetros de la curva.
+    validateCurve(a, b, p);
+
+    // 2. Calcular el orden del punto base.
+    const n = pointOrder(G, a, b, p);
+
+    if (n <= 2) {
+        throw new RangeError(
+            "El punto base debe tener orden mayor que 2."
+        );
+    }
+
+    // 3. Validar la clave privada.
+    if (!Number.isSafeInteger(d) ||
+        d < 1 || d >= n) {
+        throw new RangeError(
+            "La clave privada debe ser un entero entre 1 y " +
+            (n - 1) + "."
+        );
+    }
+
+    // 4. Comprobar que C1 pertenezca a la curva.
+    pointOrder(C1, a, b, p);
+
+    // C1 debe ser compatible con el orden del punto base.
+    if (multiplyPoint(C1, n, a, p) !== null) {
+        throw new RangeError(
+            "C1 no pertenece al subgrupo esperado."
+        );
+    }
+
+    // 5. C2 también debe pertenecer a la curva,
+    // salvo cuando representa el punto al infinito.
+    if (C2 !== null) {
+        pointOrder(C2, a, b, p);
+    }
+
+    // 6. Bob calcula el secreto S = dC1.
+    const S = multiplyPoint(C1, d, a, p);
+
+    if (S === null) {
+        throw new RangeError(
+            "El secreto de descifrado es el punto al infinito."
+        );
+    }
+
+    // 7. Obtener el punto opuesto de S.
+    const menosS = negatePoint(S, p);
+
+    // 8. Recuperar M = C2 + (-S).
+    const M = addPoints(C2, menosS, a, p);
+
+    return M;
+}

@@ -1,6 +1,24 @@
-import { initBoard, drawContinuousCurve, drawDiscretePoints, drawAdditionResult, clearAddition, drawECDHPoints, clearECDH } from './graph.js';
+import {
+    initBoard,
+    drawContinuousCurve,
+    drawDiscretePoints,
+    drawAdditionResult,
+    clearAddition,
+    drawECDHPoints,
+    clearECDH,
+    drawElGamalPoints,
+    clearElGamal
+} from './graph.js';
 import { renderStaticFormulas, updateWeierstrassEquation, showAdditionResult, showECDHResult } from './ui.js';
-import { findPoints, addPoints, multiplyPoint, validateCurve, pointOrder } from './crypto.js';
+import {
+    findPoints,
+    addPoints,
+    multiplyPoint,
+    validateCurve,
+    pointOrder,
+    encryptElGamal,
+    decryptElGamal
+} from './crypto.js';
 
 // 1. Datos
 const contentData = {
@@ -72,7 +90,7 @@ const contentData = {
                 id: 'elgamal-simulador',
                 title: 'Simulador: ElGamal',
                 hasSimulator: true,
-                content: `<p>Simulador en construcción.</p>`
+                content: `<p>Selecciona un punto base G y un mensaje M sobre la curva. Después utilizaremos las claves d y k para demostrar el cifrado y descifrado ElGamal.</p>`
             }
         ]
     },
@@ -195,10 +213,46 @@ function setupProtocolControls(subtopicId) {
             </div>
         `;
         btnSubmit.innerText = "Simular ECDH";
+    } else if (subtopicId === 'elgamal-simulador') {
+        extraControls.innerHTML = `
+            <div class="border rounded p-2 bg-light mb-3">
+                <h6 class="text-primary mb-2">
+                    Parámetros ElGamal
+                </h6>
+
+                <div class="mb-2">
+                    <label for="elgamal-d" class="form-label small">
+                        Clave privada de Bob (d)
+                    </label>
+                    <input type="number"
+                           class="form-control form-control-sm"
+                           id="elgamal-d"
+                           value="3" min="1" step="1" required>
+                </div>
+
+                <div class="mb-2">
+                    <label for="elgamal-k" class="form-label small">
+                        Escalar temporal de cifrado (k)
+                    </label>
+                    <input type="number"
+                           class="form-control form-control-sm"
+                           id="elgamal-k"
+                           value="2" min="1" step="1" required>
+                </div>
+
+                <p class="small text-muted mb-0">
+                    Selecciona primero el punto base G
+                    y después el mensaje M en la gráfica.
+                </p>
+            </div>
+        `;
+
+        btnSubmit.innerText = "Reiniciar selección ElGamal";
     } else {
         extraControls.innerHTML = '';
         btnSubmit.innerText = "Graficar Curva";
     }
+
 }
 
 
@@ -210,13 +264,41 @@ let parametrosValidos = false;
 
 const handlePointClick = (coord) => {
     if (!parametrosValidos) return;
-
     if (currentSubtopicId === 'ecdh-sim') {
-        // En ECDH, el clic establece el Punto Base G
+        // En ECDH, el clic establece el punto base G.
         selectedP = coord;
         runECDHSimulation();
+
+    } else if (currentSubtopicId === 'elgamal-simulador') {
+        const salida = document.getElementById('theory-output');
+        // Eliminar el resultado visual anterior
+        // cuando comienza una nueva selección.
+        if (!selectedP || selectedQ) {
+            clearElGamal();
+        }
+
+        if (!selectedP || selectedQ) {
+            // Primer clic: seleccionar G.
+            selectedP = coord;
+            selectedQ = null;
+
+            salida.textContent =
+                "Punto base G = (" + coord.join(", ") + "). " +
+                "Ahora selecciona el mensaje M.";
+        } else {
+            // Segundo clic: seleccionar M.
+            selectedQ = coord;
+
+            salida.textContent =
+                "Punto base G = (" + selectedP.join(", ") + "). " +
+                "Mensaje M = (" + selectedQ.join(", ") + "). " +
+                "Puntos preparados para ElGamal.";
+                runElGamalSimulation();
+        }
+
     } else {
         // En Suma Geométrica, selecciona P y Q
+
         if (selectedP && selectedQ) {
             selectedP = null;
             selectedQ = null;
@@ -359,6 +441,156 @@ const runECDHSimulation = () => {
 };
 
 
+/**
+ * Ejecuta el cifrado y descifrado ElGamal elíptico.
+ */
+const runElGamalSimulation = () => {
+    const salida = document.getElementById('theory-output');
+    const inputD = document.getElementById('elgamal-d');
+    const inputK = document.getElementById('elgamal-k');
+
+    if (!parametrosValidos || !selectedP || !selectedQ ||
+        !inputD || !inputK) {
+        return;
+    }
+
+    const G = selectedP;
+    const M = selectedQ;
+
+    const d = inputD.valueAsNumber;
+    const k = inputK.valueAsNumber;
+
+    // Permite representar el punto al infinito.
+    const puntoTexto = (P) => {
+        return P === null
+            ? "O (infinito)"
+            : "(" + P[0] + ", " + P[1] + ")";
+    };
+
+    // Muestra mensajes sin alterar las otras simulaciones.
+    const mostrarMensaje = (mensaje, esError = false) => {
+        salida.innerHTML = '';
+
+        const cuadro = document.createElement('div');
+        cuadro.className = esError
+            ? 'alert alert-warning mt-2 small'
+            : 'alert alert-success mt-2 small';
+
+        cuadro.style.whiteSpace = 'pre-line';
+        cuadro.textContent = mensaje;
+
+        salida.appendChild(cuadro);
+    };
+
+    try {
+        // 1. Calcular el orden del punto base.
+        const n = pointOrder(
+            G, currentA, currentB, currentP
+        );
+
+        if (n <= 2) {
+            throw new RangeError(
+                "Selecciona un punto base de orden mayor que 2."
+            );
+        }
+
+        // 2. Validar la clave privada y el escalar temporal.
+        if (!Number.isSafeInteger(d) ||
+            !Number.isSafeInteger(k) ||
+            d < 1 || d >= n ||
+            k < 1 || k >= n) {
+
+            throw new RangeError(
+                "Las claves d y k deben ser enteros " +
+                "entre 1 y " + (n - 1) + "."
+            );
+        }
+
+        // 3. Generar la clave pública de Bob.
+        const Q = multiplyPoint(
+            G, d, currentA, currentP
+        );
+
+        // 4. Cifrar el mensaje.
+        const { C1, C2 } = encryptElGamal(
+            M, G, Q, k,
+            currentA, currentB, currentP
+        );
+
+        // 5. Calcular el secreto temporal para explicarlo.
+        const S = multiplyPoint(
+            Q, k, currentA, currentP
+        );
+
+        // 6. Bob calcula su secreto de descifrado.
+        const secretoBob = multiplyPoint(
+            C1, d, currentA, currentP
+        );
+
+        // 7. Recuperar el mensaje original.
+        const recuperado = decryptElGamal(
+            C1, C2, G, d,
+            currentA, currentB, currentP
+        );
+
+        // 8. Comprobar que coincida con el mensaje original.
+        const coincide = recuperado !== null &&
+            recuperado[0] === M[0] &&
+            recuperado[1] === M[1];
+
+        if (!coincide) {
+            throw new Error(
+                "El mensaje recuperado no coincide con el original."
+            );
+        }
+
+        // 9. Mostrar el procedimiento completo.
+        const procedimiento = [
+            "ELGAMAL ELÍPTICO — CIFRADO Y DESCIFRADO",
+            "",
+            "1. Punto base G = " + puntoTexto(G),
+            "   Orden de G = " + n,
+            "",
+            "2. Mensaje original M = " + puntoTexto(M),
+            "",
+            "3. Clave privada de Bob d = " + d,
+            "   Clave pública Q = dG = " + puntoTexto(Q),
+            "",
+            "4. Escalar temporal k = " + k,
+            "   Secreto S = kQ = " + puntoTexto(S),
+            "",
+            "5. Primera componente C1 = kG",
+            "   C1 = " + puntoTexto(C1),
+            "",
+            "6. Segunda componente C2 = M + kQ",
+            "   C2 = " + puntoTexto(C2),
+            "",
+            "7. Bob calcula dC1",
+            "   dC1 = " + puntoTexto(secretoBob),
+            "",
+            "8. Recuperación M = C2 - dC1",
+            "   M recuperado = " + puntoTexto(recuperado),
+            "",
+            "CORRECTO: el mensaje fue recuperado."
+        ].join('\n');
+
+        mostrarMensaje(procedimiento);
+        drawElGamalPoints(
+            G, M, C1, C2, currentP, handlePointClick
+        );
+
+    } catch (error) {
+        clearElGamal();
+
+        mostrarMensaje(
+            "No fue posible completar ElGamal:\n" +
+            error.message,
+            true
+        );
+    }
+};
+
+
 const updateAll = () => {
     const inputA = document.getElementById('param-a');
     const inputB = document.getElementById('param-b');
@@ -406,6 +638,7 @@ const updateAll = () => {
  
     clearAddition(); 
     clearECDH(); 
+    clearElGamal();
 
     updateWeierstrassEquation(currentA, b);
     drawContinuousCurve(currentA, b);
@@ -418,6 +651,10 @@ const updateAll = () => {
             selectedP = validPoints[0];
             runECDHSimulation();
         }
+    } else if (currentSubtopicId === 'elgamal-simulador') {
+        document.getElementById('theory-output').textContent =
+            "ElGamal: selecciona primero el punto base G " +
+            "y después el mensaje M en la gráfica.";
     } else {
         showAdditionResult(null, null, null);
     }

@@ -233,3 +233,105 @@ export function drawECDHPoints(G, QA, QB, K) {
         ecdhElements.push(pK);
     }
 }
+
+
+/**
+ * Elementos gráficos del simulador ElGamal.
+ */
+let elgamalElements = [];
+
+/**
+ * Elimina los puntos resaltados de ElGamal.
+ */
+export function clearElGamal() {
+    if (!board) return;
+
+    board.suspendUpdate();
+
+    elgamalElements.forEach(elemento => {
+        board.removeObject(elemento);
+    });
+
+    elgamalElements = [];
+
+    board.unsuspendUpdate();
+}
+
+/**
+ * Resalta los puntos de un cifrado ElGamal.
+ */
+export function drawElGamalPoints(
+    G, M, C1, C2, p, onPointClick
+) {
+    if (!board) return;
+
+    clearElGamal();
+
+    board.suspendUpdate();
+
+    // Ajustar la vista para mostrar Fp completo.
+    // La coordenada máxima es p - 1.
+    board.setBoundingBox(
+        [-1, p, p, -1],
+        false
+    );
+
+    const puntos = [
+        {
+            coord: G,
+            nombre: "G (Base)",
+            color: "#ffc107",
+            offset: [12, 16]
+        },
+        {
+            coord: M,
+            nombre: "M (Mensaje)",
+            color: "#6f42c1",
+            offset: [-25, -18]
+        },
+        {
+            coord: C1,
+            nombre: "C1 (Cifrado)",
+            color: "#0dcaf0",
+            offset: [12, 18]
+        },
+        {
+            coord: C2,
+            nombre: "C2 (Cifrado)",
+            color: "#198754",
+            offset: [12, -18]
+        }
+    ];
+
+    puntos.forEach(item => {
+
+        // El punto al infinito no tiene coordenadas
+        // cartesianas que podamos dibujar.
+        if (item.coord === null) return;
+
+        const marca = board.create('point', item.coord, {
+            name: item.nombre,
+            size: 7,
+            fillColor: item.color,
+            strokeColor: '#212529',
+            strokeWidth: 2,
+            fixed: true,
+            highlight: false,
+            label: {
+                offset: item.offset,
+                color: item.color
+            }
+        });
+
+        // Permitir seleccionar también los puntos resaltados.
+        marca.on('down', () => {
+            if (onPointClick) {
+                onPointClick(item.coord);
+            }
+        });
+
+        elgamalElements.push(marca);
+    });
+
+    board.unsuspendUpdate();
+}
