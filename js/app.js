@@ -1,6 +1,6 @@
 import { initBoard, drawContinuousCurve, drawDiscretePoints, drawAdditionResult, clearAddition, drawECDHPoints, clearECDH } from './graph.js';
 import { renderStaticFormulas, updateWeierstrassEquation, showAdditionResult, showECDHResult } from './ui.js';
-import { findPoints, addPoints, multiplyPoint, validateCurve } from './crypto.js';
+import { findPoints, addPoints, multiplyPoint, validateCurve, pointOrder } from './crypto.js';
 
 // 1. Datos
 const contentData = {
@@ -205,7 +205,7 @@ function setupProtocolControls(subtopicId) {
 // Logica del simulador
 let selectedP = null;
 let selectedQ = null;
-let currentA, currentP;
+let currentA, currentB, currentP;
 let parametrosValidos = false;
 
 const handlePointClick = (coord) => {
@@ -237,13 +237,29 @@ const handlePointClick = (coord) => {
     }
 };
 
+
 const runECDHSimulation = () => {
     const inputDa = document.getElementById('key-da');
     const inputDb = document.getElementById('key-db');
+    const salida = document.getElementById('theory-output');
+
+    // Mostrar errores sin dejar resultados anteriores.
+    const mostrarError = (mensaje) => {
+        clearECDH();
+        salida.innerHTML = '';
+
+        const aviso = document.createElement('div');
+        aviso.className = 'alert alert-warning mt-2';
+        aviso.textContent = mensaje;
+
+        salida.appendChild(aviso);
+    };
+
+    // No ejecutar si la curva actual es inválida.
+    if (!parametrosValidos) return;
 
     if (!inputDa || !inputDb || !selectedP) {
-        clearECDH();
-        showECDHResult(null, null, null, null, null, null, null);
+        mostrarError("Selecciona un punto base válido.");
         return;
     }
 
@@ -251,18 +267,97 @@ const runECDHSimulation = () => {
     const dB = inputDb.valueAsNumber;
     const G = selectedP;
 
-    // Aritmética ECDH usando multiplicación escalar k * P
-    const QA = multiplyPoint(G, dA, currentA, currentP);
-    const QB = multiplyPoint(G, dB, currentA, currentP);
-    const KA = multiplyPoint(QB, dA, currentA, currentP);
-    const KB = multiplyPoint(QA, dB, currentA, currentP);
+    try {
+        // 1. Calcular el orden del punto base.
+        const n = pointOrder(
+            G, currentA, currentB, currentP
+        );
 
-    // 1. Mostrar resultados numéricos
-    showECDHResult(G, dA, dB, QA, QB, KA, KB);
+        // 2. Rechazar puntos de orden demasiado pequeño.
+        if (n <= 2) {
+            mostrarError(
+                "El punto G tiene orden " + n +
+                ". Selecciona un punto de orden mayor que 2."
+            );
+            return;
+        }
 
-    // 2. Dibujar y resaltar puntos en la gráfica
-    drawECDHPoints(G, QA, QB, KA);
+        // 3. Validar las claves privadas.
+        if (!Number.isSafeInteger(dA) ||
+            !Number.isSafeInteger(dB) ||
+            dA < 1 || dA >= n ||
+            dB < 1 || dB >= n) {
+
+            mostrarError(
+                "Las claves privadas deben ser enteros " +
+                "entre 1 y " + (n - 1) +
+                ". El orden de G es " + n + "."
+            );
+            return;
+        }
+
+        // 4. Calcular las claves públicas.
+        const QA = multiplyPoint(
+            G, dA, currentA, currentP
+        );
+
+        const QB = multiplyPoint(
+            G, dB, currentA, currentP
+        );
+
+        // 5. Calcular los secretos compartidos.
+        const KA = multiplyPoint(
+            QB, dA, currentA, currentP
+        );
+
+        const KB = multiplyPoint(
+            QA, dB, currentA, currentP
+        );
+
+        // 6. Rechazar resultados al infinito.
+        if (QA === null || QB === null ||
+            KA === null || KB === null) {
+            mostrarError(
+                "El intercambio produjo el punto al infinito. " +
+                "Selecciona otras claves o un punto base diferente."
+            );
+            return;
+        }
+
+        // 7. Verificar que los secretos coincidan.
+        const coinciden =
+            KA[0] === KB[0] &&
+            KA[1] === KB[1];
+
+        if (!coinciden) {
+            mostrarError(
+                "Error: Alice y Bob obtuvieron secretos distintos."
+            );
+            return;
+        }
+
+        // 8. Mostrar resultados y actualizar gráfica.
+        showECDHResult(G, dA, dB, QA, QB, KA, KB);
+        drawECDHPoints(G, QA, QB, KA);
+
+        // 9. Mostrar información del subgrupo.
+        const informacion = document.createElement('p');
+        informacion.className = 'small text-muted mt-2';
+
+        informacion.textContent =
+            "Orden del punto G: " + n +
+            ". Rango de claves privadas: 1 a " + (n - 1) +
+            ". Secretos compartidos verificados.";
+
+        salida.appendChild(informacion);
+
+    } catch (error) {
+        mostrarError(
+            "No fue posible completar ECDH: " + error.message
+        );
+    }
 };
+
 
 const updateAll = () => {
     const inputA = document.getElementById('param-a');
@@ -297,6 +392,7 @@ const updateAll = () => {
 
     // Si la validación fue correcta, actualizar parámetros.
     currentA = a;
+    currentB = b;
     currentP = p;
     parametrosValidos = true;
 

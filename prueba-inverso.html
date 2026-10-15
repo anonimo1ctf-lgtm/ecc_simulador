@@ -11,7 +11,14 @@
     <pre id="resultado">Ejecutando pruebas...</pre>
 
     <script type="module">
-        import { modInverse, isPrime, validateCurve, findPoints } from './js/crypto.js';
+        import {
+    modInverse,
+    isPrime,
+    validateCurve,
+    findPoints,
+    multiplyPoint,
+    pointOrder
+} from './js/crypto.js';
 
         const salida = document.getElementById('resultado');
 
@@ -126,6 +133,84 @@ probar('findPoints rechaza curva singular', () => {
     } catch (error) {
         return error instanceof RangeError;
     }
+});
+
+
+// Prueba 13: orden del punto generador.
+probar('Orden de G=(0,1) es 14', () => {
+    return pointOrder([0, 1], -1, 1, 17) === 14;
+});
+
+// Prueba 14: punto de orden 2.
+probar('Orden de P=(12,0) es 2', () => {
+    return pointOrder([12, 0], -1, 1, 17) === 2;
+});
+
+// Prueba 15: multiplicación por el orden.
+probar('14G produce el punto al infinito', () => {
+    const resultado = multiplyPoint(
+        [0, 1], 14, -1, 17
+    );
+
+    return resultado === null;
+});
+
+// Prueba 16: rechazar punto fuera de la curva.
+probar('Rechazar punto (2,2)', () => {
+    try {
+        pointOrder([2, 2], -1, 1, 17);
+        return false;
+    } catch (error) {
+        return error instanceof RangeError;
+    }
+});
+
+
+// Prueba 17: clave pública de Alice.
+probar('ECDH: clave pública de Alice', () => {
+    const QA = multiplyPoint([0, 1], 3, -1, 17);
+    return QA[0] === 5 && QA[1] === 11;
+});
+
+// Prueba 18: clave pública de Bob.
+probar('ECDH: clave pública de Bob', () => {
+    const QB = multiplyPoint([0, 1], 5, -1, 17);
+    return QB[0] === 1 && QB[1] === 16;
+});
+
+// Prueba 19: secreto compartido.
+probar('ECDH: secretos de Alice y Bob coinciden', () => {
+    const G = [0, 1];
+
+    const QA = multiplyPoint(G, 3, -1, 17);
+    const QB = multiplyPoint(G, 5, -1, 17);
+
+    const KA = multiplyPoint(QB, 3, -1, 17);
+    const KB = multiplyPoint(QA, 5, -1, 17);
+
+    return KA !== null && KB !== null &&
+           KA[0] === KB[0] && KA[1] === KB[1] &&
+           KA[0] === 0 && KA[1] === 1;
+});
+
+// Prueba 20: rechazar escalares incorrectos.
+probar('Rechazar escalares decimales y negativos', () => {
+    let decimalRechazado = false;
+    let negativoRechazado = false;
+
+    try {
+        multiplyPoint([0, 1], 3.8, -1, 17);
+    } catch (error) {
+        decimalRechazado = error instanceof RangeError;
+    }
+
+    try {
+        multiplyPoint([0, 1], -3, -1, 17);
+    } catch (error) {
+        negativoRechazado = error instanceof RangeError;
+    }
+
+    return decimalRechazado && negativoRechazado;
 });
 
 

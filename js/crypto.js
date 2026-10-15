@@ -200,8 +200,21 @@ export function addPoints(P, Q, a, p) {
  * @param {number} p - Campo finito primo
  * @returns {Array<number>|null} Punto resultante [x, y] o null si cae al Infinito (O)
  */
+
 export function multiplyPoint(P, k, a, p) {
-    if (!P || k <= 0) return null;
+
+    // El escalar debe ser un entero seguro no negativo.
+    if (!Number.isSafeInteger(k) || k < 0) {
+        throw new RangeError(
+            "El escalar k debe ser un entero no negativo."
+        );
+    }
+
+    // El producto por cero es el punto al infinito.
+    if (P === null || k === 0) {
+        return null;
+    }
+
 
     let result = null; // Representa el Punto al Infinito (Elemento Neutro)
     let addend = P;
@@ -219,4 +232,57 @@ export function multiplyPoint(P, k, a, p) {
     }
 
     return result;
+}
+
+
+/**
+ * Calcula el orden de un punto P en E(Fp).
+ * El orden es el menor n > 0 tal que nP = O.
+ */
+export function pointOrder(P, a, b, p) {
+
+    // Validar los parámetros de la curva.
+    validateCurve(a, b, p);
+
+    // Verificar que P tenga coordenadas válidas.
+    if (!Array.isArray(P) || P.length !== 2 ||
+        !P.every(v => Number.isSafeInteger(v) &&
+                      v >= 0 && v < p)) {
+        throw new RangeError(
+            "El punto debe tener coordenadas enteras en Fp."
+        );
+    }
+
+    const [x, y] = P;
+
+    // Comprobar que el punto pertenezca a la curva.
+    const lhs = mod(y * y, p);
+    const rhs = mod(
+        x * x * x + mod(a, p) * x + mod(b, p),
+        p
+    );
+
+    if (lhs !== rhs) {
+        throw new RangeError(
+            "El punto no pertenece a la curva elíptica."
+        );
+    }
+
+    // Número total de puntos, incluyendo O.
+    const totalPuntos = findPoints(a, b, p).length + 1;
+
+    let resultado = null;
+
+    // Sumar P repetidamente hasta llegar a O.
+    for (let n = 1; n <= totalPuntos; n++) {
+        resultado = addPoints(resultado, P, a, p);
+
+        if (resultado === null) {
+            return n;
+        }
+    }
+
+    throw new Error(
+        "No se pudo determinar el orden del punto."
+    );
 }
