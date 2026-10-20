@@ -41,6 +41,182 @@ const contentData = {
                     <div class="text-center my-3">
                         $$ 4a^3 + 27b^2 \\not\\equiv 0 \\pmod{p} $$
                     </div>
+
+    <h5 class="text-primary mt-4">
+        ¿Qué es un campo finito?
+    </h5>
+
+    <p>
+        Un campo finito Fp es un conjunto de números
+        enteros sobre los cuales realizamos operaciones
+        utilizando aritmética modular.
+    </p>
+
+    <p>
+        En nuestro simulador, p debe ser un número primo
+        mayor que 3. Las coordenadas de los puntos
+        toman valores enteros entre 0 y p - 1.
+    </p>
+
+    <h5 class="text-primary mt-4">
+        Puntos de una curva elíptica
+    </h5>
+
+    <p>
+        Un punto P = (x, y) pertenece a la curva
+        cuando sus coordenadas satisfacen
+        la ecuación de Weierstrass módulo p.
+    </p>
+
+    <p>
+        Por ejemplo, para a = -1, b = 1 y p = 17,
+        existen 13 puntos con coordenadas finitas.
+        Al incluir el punto al infinito,
+        el grupo contiene 14 elementos.
+    </p>
+
+    <h5 class="text-primary mt-4">
+        El punto al infinito
+    </h5>
+
+    <p>
+        El punto al infinito, representado por O,
+        funciona como elemento neutro de la suma.
+        Esto significa que sumar O a cualquier
+        punto P no modifica su valor.
+    </p>
+
+    <div class="text-center my-3">
+        $$ P + O = P $$
+    </div>
+
+    <p>
+        Cada punto P también tiene un punto opuesto.
+        Cuando sumamos ambos, obtenemos O.
+    </p>
+
+    <div class="text-center my-3">
+        $$ P + (-P) = O $$
+    </div>
+
+
+    <h5 class="text-primary mt-4">
+        Suma de dos puntos diferentes
+    </h5>
+
+    <p>
+        Para sumar dos puntos diferentes
+        P = (x1, y1) y Q = (x2, y2),
+        calculamos una pendiente modular.
+        Cuando sus coordenadas x son diferentes,
+        utilizamos:
+    </p>
+
+    <div class="text-center my-3">
+        $$ \\lambda = (y_2-y_1)(x_2-x_1)^{-1} \\pmod{p} $$
+    </div>
+
+    <p>
+        El exponente -1 representa el inverso
+        multiplicativo modular del denominador.
+        No es una división convencional.
+    </p>
+
+    <h5 class="text-primary mt-4">
+        Duplicación de un punto
+    </h5>
+
+    <p>
+        Cuando sumamos un punto consigo mismo,
+        P + P = 2P, utilizamos la pendiente
+        de duplicación, siempre que y1 sea
+        diferente de cero:
+    </p>
+
+    <div class="text-center my-3">
+        $$ \\lambda = (3x_1^2+a)(2y_1)^{-1} \\pmod{p} $$
+    </div>
+
+    <h5 class="text-primary mt-4">
+        Coordenadas del resultado
+    </h5>
+
+    <p>
+        Una vez calculada la pendiente,
+        obtenemos las coordenadas del punto
+        resultante R = (x3, y3).
+    </p>
+
+    <div class="text-center my-3">
+        $$ x_3 = \\lambda^2-x_1-x_2 \\pmod{p} $$
+    </div>
+
+    <div class="text-center my-3">
+        $$ y_3 = \\lambda(x_1-x_3)-y_1 \\pmod{p} $$
+    </div>
+
+    <p>
+        Si los puntos son opuestos, su suma
+        es el punto al infinito O.
+        También obtenemos O al duplicar
+        un punto cuya coordenada y es cero.
+    </p>
+
+
+    <h5 class="text-primary mt-4">
+        Ejemplo numérico: suma de dos puntos
+    </h5>
+
+    <p>
+        Consideremos la curva con a = -1,
+        b = 1 y p = 17. Queremos sumar:
+    </p>
+
+    <div class="text-center my-3">
+        $$ P = (0,1), \\quad Q = (1,1) $$
+    </div>
+
+    <h6 class="mt-3">Paso 1: Calcular la pendiente</h6>
+
+    <p>
+        Como las coordenadas x son diferentes,
+        aplicamos la fórmula de suma de puntos.
+        El denominador es 1 y su inverso
+        modular respecto a 17 también es 1.
+    </p>
+
+    <div class="text-center my-3">
+        $$ \\lambda = (1-1)(1-0)^{-1} = 0 $$
+    </div>
+
+    <h6 class="mt-3">Paso 2: Calcular x3</h6>
+
+    <div class="text-center my-3">
+        $$ x_3 = 0^2-0-1 = -1 \\equiv 16 \\pmod{17} $$
+    </div>
+
+    <h6 class="mt-3">Paso 3: Calcular y3</h6>
+
+    <div class="text-center my-3">
+        $$ y_3 = 0(0-16)-1 = -1 \\equiv 16 \\pmod{17} $$
+    </div>
+
+    <div class="alert alert-success mt-3">
+        <strong>Resultado:</strong>
+        P + Q = (16, 16).
+        El punto obtenido pertenece a la misma
+        curva elíptica sobre el campo finito.
+    </div>
+
+
+    <div class="alert alert-info mt-3">
+        <strong>Importante:</strong>
+        Los puntos del campo finito son discretos.
+        La curva continua que aparece en la gráfica
+        sirve como referencia visual y no representa
+        las operaciones modulares del campo.
+    </div>
+
                 `
             },
             {
@@ -68,6 +244,124 @@ const contentData = {
                     <div class="text-center my-3">
                         $$ K = d_A Q_B = d_A (d_B G) = d_B (d_A G) = d_B Q_A $$
                     </div>
+
+    <h5 class="text-primary mt-4">
+        ¿Qué información intercambian Alice y Bob?
+    </h5>
+
+    <p>
+        Antes de comenzar, ambos participantes
+        acuerdan utilizar la misma curva elíptica
+        y el mismo punto base G.
+    </p>
+
+    <p>
+        Alice selecciona una clave privada dA
+        y calcula su clave pública QA.
+        Bob selecciona una clave privada dB
+        y calcula su clave pública QB.
+    </p>
+
+    <div class="text-center my-3">
+        $$ Q_A = d_A G $$
+    </div>
+
+    <div class="text-center my-3">
+        $$ Q_B = d_B G $$
+    </div>
+
+    <p>
+        Alice envía QA a Bob y Bob envía QB
+        a Alice. Las claves privadas dA y dB
+        nunca deben transmitirse.
+    </p>
+
+    <h5 class="text-primary mt-4">
+        ¿Por qué coinciden los secretos?
+    </h5>
+
+    <p>
+        Alice multiplica la clave pública
+        de Bob por su clave privada.
+        Bob realiza la operación equivalente
+        utilizando la clave pública de Alice.
+    </p>
+
+    <p>
+        Como ambas operaciones equivalen a
+        multiplicar el punto G por el producto
+        de las claves privadas, Alice y Bob
+        obtienen el mismo punto de la curva.
+    </p>
+
+
+    <h5 class="text-primary mt-4">
+        Ejemplo numérico de ECDH
+    </h5>
+
+    <p>
+        Utilizaremos la curva con a = -1, b = 1
+        y p = 17. El punto base seleccionado
+        es G = (0, 1), cuyo orden es 14.
+    </p>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Parámetro</th>
+                    <th>Valor</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>Punto base G</td><td>(0, 1)</td></tr>
+                <tr><td>Clave privada Alice dA</td><td>3</td></tr>
+                <tr><td>Clave privada Bob dB</td><td>5</td></tr>
+                <tr><td>Clave pública Alice QA</td><td>(5, 11)</td></tr>
+                <tr><td>Clave pública Bob QB</td><td>(1, 16)</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h6 class="mt-3">Cálculo del secreto compartido</h6>
+
+    <p>
+        Alice multiplica la clave pública de Bob
+        por su clave privada.
+    </p>
+
+    <div class="text-center my-3">
+        $$ K_A = 3Q_B = (0,1) $$
+    </div>
+
+    <p>
+        Bob multiplica la clave pública de Alice
+        por su propia clave privada.
+    </p>
+
+    <div class="text-center my-3">
+        $$ K_B = 5Q_A = (0,1) $$
+    </div>
+
+    <div class="alert alert-success mt-3">
+        <strong>Resultado:</strong>
+        Alice y Bob obtienen el mismo punto
+        secreto K = (0, 1), sin transmitir
+        sus claves privadas.
+    </div>
+
+
+    <div class="alert alert-warning mt-3">
+        <strong>Uso educativo:</strong>
+        Este simulador utiliza parámetros
+        pequeños para mostrar las operaciones.
+        En aplicaciones reales se necesitan
+        curvas seguras, validación de claves
+        y una función de derivación de claves
+        para obtener una clave simétrica
+        a partir del secreto compartido.
+    </div>
+
                 `
             },
             {
@@ -87,7 +381,169 @@ const contentData = {
                 id: 'elgamal-teoria',
                 title: 'Teoría: Cifrado y Descifrado',
                 hasSimulator: false,
-                content: `<p>El criptosistema ElGamal cifra mensajes mapeados a puntos $M$ en la curva.</p>`
+
+content: `
+    <h5 class="text-primary">
+        ¿Qué es ElGamal elíptico?
+    </h5>
+
+    <p>
+        ElGamal es un criptosistema de clave pública
+        que permite cifrar y descifrar mensajes.
+        Su versión elíptica utiliza operaciones
+        entre puntos de una curva elíptica.
+    </p>
+
+    <p>
+        En nuestro simulador, el mensaje se representa
+        mediante un punto M perteneciente a la curva.
+        El destinatario utiliza una clave privada d
+        y una clave pública Q, calculada a partir
+        de un punto base G.
+    </p>
+
+    <p>
+        Para cifrar, el emisor utiliza la clave pública
+        del destinatario y un escalar temporal k.
+        El resultado es un par de puntos cifrados
+        que el destinatario puede utilizar para
+        recuperar el mensaje original.
+    </p>
+
+
+    <h5 class="text-primary mt-4">
+        1. Generación de claves
+    </h5>
+
+    <p>
+        Bob selecciona una clave privada d y calcula
+        su clave pública Q multiplicando el punto
+        base G por esa clave.
+    </p>
+
+    <div class="text-center my-3">
+        $$ Q = dG $$
+    </div>
+
+    <h5 class="text-primary mt-4">
+        2. Cifrado del mensaje
+    </h5>
+
+    <p>
+        Alice representa el mensaje mediante un punto M,
+        selecciona un escalar temporal k y calcula
+        dos componentes cifrados.
+    </p>
+
+    <div class="text-center my-3">
+        $$ C_1 = kG $$
+    </div>
+
+    <div class="text-center my-3">
+        $$ C_2 = M + kQ $$
+    </div>
+
+    <p>
+        Alice envía el par de puntos (C1, C2) a Bob.
+        La clave privada d permanece secreta.
+    </p>
+
+    <h5 class="text-primary mt-4">
+        3. Descifrado del mensaje
+    </h5>
+
+    <p>
+        Bob utiliza su clave privada d para eliminar
+        del segundo componente la transformación
+        aplicada durante el cifrado.
+    </p>
+
+    <div class="text-center my-3">
+        $$ M = C_2 - dC_1 $$
+    </div>
+
+    <p>
+        Como Q = dG, se cumple que dC1 = kQ.
+        Al restar ese punto, Bob recupera el
+        mensaje original M.
+    </p>
+
+
+    <h5 class="text-primary mt-4">
+        4. Ejemplo numérico paso a paso
+    </h5>
+
+    <p>
+        Consideremos la curva con a = -1, b = 1
+        y p = 17. El mensaje original se
+        representa mediante el punto M = (1, 1).
+    </p>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Parámetro</th>
+                    <th>Valor</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>Punto base G</td><td>(0, 1)</td></tr>
+                <tr><td>Clave privada de Bob d</td><td>3</td></tr>
+                <tr><td>Clave pública Q = 3G</td><td>(5, 11)</td></tr>
+                <tr><td>Mensaje M</td><td>(1, 1)</td></tr>
+                <tr><td>Escalar temporal k</td><td>2</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h6 class="mt-3">Proceso de cifrado</h6>
+
+    <p>
+        Alice calcula la primera componente C1 = kG
+        y el secreto temporal S = kQ.
+        Después obtiene C2 = M + S.
+    </p>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered table-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Operación</th>
+                    <th>Resultado</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>C1 = 2G</td><td>(13, 14)</td></tr>
+                <tr><td>S = 2Q</td><td>(3, 5)</td></tr>
+                <tr><td>C2 = M + S</td><td>(0, 1)</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h6 class="mt-3">Proceso de descifrado</h6>
+
+    <p>
+        Bob calcula dC1 = 3C1 = (3, 5).
+        A continuación obtiene el punto opuesto
+        -dC1 = (3, 12) y lo suma con C2.
+    </p>
+
+    <div class="alert alert-success mt-3">
+        <strong>Resultado:</strong>
+        M = (0, 1) + (3, 12) = (1, 1).
+        Bob recupera exactamente el mensaje original.
+    </div>
+
+
+    <div class="alert alert-warning mt-3">
+        <strong>Uso educativo:</strong>
+        Las curvas y claves pequeñas utilizadas
+        en esta plataforma no ofrecen seguridad
+        criptográfica para aplicaciones reales.
+    </div>
+`
+
             },
             {
                 id: 'elgamal-simulador',
@@ -104,7 +560,166 @@ const contentData = {
                 id: 'massey-teoria',
                 title: 'Teoría: Cifrado en tres pasos',
                 hasSimulator: false,
-                content: `<p>Cifrado de tres pasos sin intercambio previo de claves.</p>`
+                content: `
+    <h5 class="text-primary">¿Qué es Massey-Omura?</h5>
+
+    <p>
+        Massey-Omura es un protocolo criptográfico
+        de tres transmisiones que permite intercambiar
+        un mensaje sin compartir previamente las
+        claves privadas de Alice y Bob.
+    </p>
+
+    <p>
+        En nuestra implementación, el mensaje se
+        representa mediante un punto M perteneciente
+        a una curva elíptica sobre un campo finito.
+    </p>
+
+    <p>
+        Alice y Bob utilizan exponentes privados
+        y sus respectivos inversos modulares
+        para transformar y recuperar el mensaje.
+    </p>
+
+    <h5 class="text-primary mt-4">
+        Preparación de las claves privadas
+    </h5>
+
+    <p>
+        Alice y Bob seleccionan exponentes privados
+        que tengan inverso modular respecto a N,
+        el número total de puntos de la curva,
+        incluyendo el punto al infinito.
+    </p>
+
+    <p>
+        Alice utiliza los valores eA y dA:
+    </p>
+
+    <div class="text-center my-3">
+        $$ e_A d_A \\equiv 1 \\pmod{N} $$
+    </div>
+
+    <p>
+        Bob utiliza los valores eB y dB:
+    </p>
+
+    <div class="text-center my-3">
+        $$ e_B d_B \\equiv 1 \\pmod{N} $$
+    </div>
+
+    <h5 class="text-primary mt-4">
+        Las tres transmisiones del protocolo
+    </h5>
+
+    <p>
+        Alice y Bob aplican sus exponentes privados
+        sobre el mensaje M siguiendo estos pasos:
+    </p>
+
+    <h6 class="mt-3">Paso 1: Alice envía a Bob</h6>
+    <p>
+        Alice multiplica el mensaje M por su exponente eA.
+    </p>
+    <div class="text-center my-3">
+        $$ M_1 = e_A M $$
+    </div>
+
+    <h6 class="mt-3">Paso 2: Bob devuelve a Alice</h6>
+    <p>
+        Bob multiplica el punto recibido por su exponente eB.
+    </p>
+    <div class="text-center my-3">
+        $$ M_2 = e_B M_1 $$
+    </div>
+
+    <h6 class="mt-3">Paso 3: Alice envía a Bob</h6>
+    <p>
+        Alice utiliza su inverso modular dA para
+        eliminar su transformación del mensaje.
+    </p>
+    <div class="text-center my-3">
+        $$ M_3 = d_A M_2 $$
+    </div>
+
+    <h5 class="text-success mt-4">
+        Recuperación del mensaje original
+    </h5>
+
+    <p>
+        Finalmente, Bob aplica su inverso modular dB
+        y recupera el punto M enviado inicialmente.
+    </p>
+
+    <div class="text-center my-3">
+        $$ M = d_B M_3 $$
+    </div>
+
+    <h5 class="text-primary mt-4">
+        Ejemplo numérico paso a paso
+    </h5>
+
+    <p>
+        Consideremos la curva elíptica con
+        a = -1, b = 1 y p = 17.
+        Esta curva tiene 14 puntos en total,
+        incluyendo el punto al infinito.
+    </p>
+
+    <p>
+        Alice desea enviar el mensaje M = (0, 1).
+        Para ello utiliza los siguientes valores:
+    </p>
+
+    <table class="table table-bordered table-sm">
+        <thead class="table-light">
+            <tr>
+                <th>Parámetro</th>
+                <th>Valor</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Orden del grupo N</td><td>14</td></tr>
+            <tr><td>Exponente Alice eA</td><td>3</td></tr>
+            <tr><td>Inverso Alice dA</td><td>5</td></tr>
+            <tr><td>Exponente Bob eB</td><td>9</td></tr>
+            <tr><td>Inverso Bob dB</td><td>11</td></tr>
+        </tbody>
+    </table>
+
+    <h6 class="mt-3">Resultados de las transmisiones</h6>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered table-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Operación</th>
+                    <th>Punto obtenido</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>Mensaje original M</td><td>(0, 1)</td></tr>
+                <tr><td>M1 = 3M</td><td>(5, 11)</td></tr>
+                <tr><td>M2 = 9M1</td><td>(0, 16)</td></tr>
+                <tr><td>M3 = 5M2</td><td>(1, 1)</td></tr>
+                <tr><td>M = 11M3</td><td>(0, 1)</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="alert alert-success mt-3">
+        <strong>Resultado:</strong>
+        Bob recupera el punto original M = (0, 1),
+        demostrando que las transformaciones
+        realizadas por Alice y Bob se cancelan.
+    </div>
+    <div class="alert alert-warning mt-3">
+        <strong>Uso educativo:</strong>
+        Este simulador utiliza parámetros pequeños
+        para explicar las operaciones matemáticas.
+        No debe utilizarse para proteger información real.
+    </div>`
             },
             {
                 id: 'massey-simulador',
