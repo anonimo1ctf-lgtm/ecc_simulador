@@ -335,3 +335,102 @@ export function drawElGamalPoints(
 
     board.unsuspendUpdate();
 }
+
+
+/**
+ * Elementos gráficos del protocolo Massey-Omura.
+ */
+let masseyElements = [];
+
+/**
+ * Limpia las marcas de Massey-Omura.
+ */
+export function clearMasseyOmura() {
+    if (!board) return;
+
+    board.suspendUpdate();
+
+    masseyElements.forEach(elemento => {
+        board.removeObject(elemento);
+    });
+
+    masseyElements = [];
+
+    board.unsuspendUpdate();
+}
+
+/**
+ * Dibuja el mensaje y las tres transmisiones.
+ */
+export function drawMasseyOmuraPoints(
+    M, paso1, paso2, paso3, p, onPointClick
+) {
+    if (!board) return;
+
+    clearMasseyOmura();
+
+    board.suspendUpdate();
+
+    // Mostrar las coordenadas del campo finito.
+    board.setBoundingBox([-1, p, p, -1], false);
+
+    const puntos = [
+        {
+            coord: M,
+            nombre: "M (Original)",
+            color: "#6f42c1",
+            offset: [12, -18]
+        },
+        {
+            coord: paso1,
+            nombre: "M1 (Alice)",
+            color: "#0dcaf0",
+            offset: [12, 16]
+        },
+        {
+            coord: paso2,
+            nombre: "M2 (Bob)",
+            color: "#fd7e14",
+            offset: [12, 16]
+        },
+        {
+            coord: paso3,
+            nombre: "M3 (Alice)",
+            color: "#198754",
+            offset: [12, -18]
+        }
+    ];
+
+    puntos.forEach(item => {
+        if (item.coord === null) return;
+
+        const marca = board.create(
+            'point',
+            item.coord,
+            {
+                name: item.nombre,
+                size: 7,
+                fillColor: item.color,
+                strokeColor: '#212529',
+                strokeWidth: 2,
+                fixed: true,
+                highlight: false,
+                label: {
+                    offset: item.offset,
+                    color: item.color
+                }
+            }
+        );
+
+        // Permitir seleccionar mensajes nuevos.
+        marca.on('down', () => {
+            if (onPointClick) {
+                onPointClick(item.coord);
+            }
+        });
+
+        masseyElements.push(marca);
+    });
+
+    board.unsuspendUpdate();
+}

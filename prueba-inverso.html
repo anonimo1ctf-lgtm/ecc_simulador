@@ -21,7 +21,8 @@
     negatePoint,
     addPoints,
     encryptElGamal,
-    decryptElGamal
+    decryptElGamal,
+    simulateMasseyOmura
 } from './js/crypto.js';
 
         const salida = document.getElementById('resultado');
@@ -379,10 +380,66 @@ probar('ElGamal: rechazar C1 fuera de la curva', () => {
         return error instanceof RangeError;
     }
 });
+// Prueba 34: protocolo completo.
+probar('Massey-Omura: recupera el mensaje original', () => {
+    const resultado = simulateMasseyOmura(
+        [0, 1], 3, 9, -1, 1, 17
+    );
 
+    return resultado.N === 14 &&
+           resultado.paso1[0] === 5 &&
+           resultado.paso1[1] === 11 &&
+           resultado.paso2[0] === 0 &&
+           resultado.paso2[1] === 16 &&
+           resultado.paso3[0] === 1 &&
+           resultado.paso3[1] === 1 &&
+           resultado.recuperado[0] === 0 &&
+           resultado.recuperado[1] === 1;
+});
+// Prueba 35: inversos de los exponentes.
+probar('Massey-Omura: inversos modulares correctos', () => {
+    const resultado = simulateMasseyOmura(
+        [0, 1], 3, 9, -1, 1, 17
+    );
 
-
-
+    return resultado.dA === 5 &&
+           resultado.dB === 11 &&
+           (resultado.eA * resultado.dA) % resultado.N === 1 &&
+           (resultado.eB * resultado.dB) % resultado.N === 1;
+});
+// Prueba 36: rechazar exponente sin inverso.
+probar('Massey-Omura: rechazar eA=2', () => {
+    try {
+        simulateMasseyOmura(
+            [0, 1], 2, 9, -1, 1, 17
+        );
+        return false;
+    } catch (error) {
+        return error instanceof RangeError;
+    }
+});
+// Prueba 37: rechazar exponentes decimales.
+probar('Massey-Omura: rechazar eB decimal', () => {
+    try {
+        simulateMasseyOmura(
+            [0, 1], 3, 9.5, -1, 1, 17
+        );
+        return false;
+    } catch (error) {
+        return error instanceof RangeError;
+    }
+});
+// Prueba 38: rechazar mensaje inválido.
+probar('Massey-Omura: rechazar punto fuera de la curva', () => {
+    try {
+        simulateMasseyOmura(
+            [2, 2], 3, 9, -1, 1, 17
+        );
+        return false;
+    } catch (error) {
+        return error instanceof RangeError;
+    }
+});
         reporte += '\nRESULTADO: ' +
                    aprobadas + '/' + total +
                    ' pruebas aprobadas';

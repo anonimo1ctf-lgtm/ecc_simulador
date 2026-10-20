@@ -7,7 +7,9 @@ import {
     drawECDHPoints,
     clearECDH,
     drawElGamalPoints,
-    clearElGamal
+    clearElGamal,
+    drawMasseyOmuraPoints,
+    clearMasseyOmura
 } from './graph.js';
 import { renderStaticFormulas, updateWeierstrassEquation, showAdditionResult, showECDHResult } from './ui.js';
 import {
@@ -17,7 +19,8 @@ import {
     validateCurve,
     pointOrder,
     encryptElGamal,
-    decryptElGamal
+    decryptElGamal,
+    simulateMasseyOmura
 } from './crypto.js';
 
 // 1. Datos
@@ -107,7 +110,7 @@ const contentData = {
                 id: 'massey-simulador',
                 title: 'Simulador: Massey-Omura',
                 hasSimulator: true,
-                content: `<p>Simulador en construcción.</p>`
+                content: `<p>Selecciona un punto M de la curva y utiliza los exponentes privados de Alice y Bob para simular las tres transmisiones de Massey-Omura y recuperar el mensaje original.</p>`
             }
         ]
     }
@@ -246,12 +249,52 @@ function setupProtocolControls(subtopicId) {
                 </p>
             </div>
         `;
-
         btnSubmit.innerText = "Reiniciar selección ElGamal";
+
+    } else if (subtopicId === 'massey-simulador') {
+        extraControls.innerHTML = `
+            <div class="border rounded p-2 bg-light mb-3">
+                <h6 class="text-primary mb-2">
+                    Parámetros Massey-Omura
+                </h6>
+
+                <div class="mb-2">
+                    <label for="massey-ea" class="form-label small">
+                        Exponente privado de Alice (eA)
+                    </label>
+                    <input type="number"
+                           class="form-control form-control-sm"
+                           id="massey-ea"
+                           value="3" min="2" step="1" required>
+                </div>
+
+                <div class="mb-2">
+                    <label for="massey-eb" class="form-label small">
+                        Exponente privado de Bob (eB)
+                    </label>
+                    <input type="number"
+                           class="form-control form-control-sm"
+                           id="massey-eb"
+                           value="9" min="2" step="1" required>
+                </div>
+
+                <p class="small text-muted mb-0">
+                    Selecciona el punto M que representa
+                    el mensaje en la gráfica.
+                    Los exponentes deben tener inverso
+                    módulo el orden del grupo.
+                </p>
+            </div>
+        `;
+
+        btnSubmit.innerText =
+            "Reiniciar selección Massey-Omura";
+
     } else {
         extraControls.innerHTML = '';
         btnSubmit.innerText = "Graficar Curva";
     }
+
 
 }
 
@@ -296,8 +339,24 @@ const handlePointClick = (coord) => {
                 runElGamalSimulation();
         }
 
+
+    } else if (currentSubtopicId === 'massey-simulador') {
+
+        // En Massey-Omura solo seleccionamos el mensaje M.
+        selectedP = coord;
+        selectedQ = null;
+
+        const salida = document.getElementById('theory-output');
+
+        salida.textContent =
+            "Mensaje M = (" + coord.join(", ") + "). " +
+            "Punto seleccionado correctamente. " +
+            "Preparado para ejecutar Massey-Omura.";
+            runMasseyOmuraSimulation();
+
     } else {
         // En Suma Geométrica, selecciona P y Q
+
 
         if (selectedP && selectedQ) {
             selectedP = null;
@@ -591,6 +650,118 @@ const runElGamalSimulation = () => {
 };
 
 
+/**
+ * Ejecuta el protocolo Massey-Omura y muestra
+ * las tres transmisiones y la recuperación del mensaje.
+ */
+const runMasseyOmuraSimulation = () => {
+    const salida = document.getElementById('theory-output');
+    const inputEA = document.getElementById('massey-ea');
+    const inputEB = document.getElementById('massey-eb');
+
+    if (!parametrosValidos || !selectedP ||
+        !inputEA || !inputEB) {
+        return;
+    }
+
+    const M = selectedP;
+    const eA = inputEA.valueAsNumber;
+    const eB = inputEB.valueAsNumber;
+
+    // Mostrar un punto en formato legible.
+    const puntoTexto = (P) => {
+        return P === null
+            ? "O (infinito)"
+            : "(" + P[0] + ", " + P[1] + ")";
+    };
+
+    // Mostrar resultados o errores de forma segura.
+    const mostrarMensaje = (mensaje, esError = false) => {
+        salida.innerHTML = '';
+
+        const cuadro = document.createElement('div');
+
+        cuadro.className = esError
+            ? 'alert alert-warning mt-2 small'
+            : 'alert alert-info mt-2 small';
+
+        cuadro.style.whiteSpace = 'pre-line';
+        cuadro.textContent = mensaje;
+
+        salida.appendChild(cuadro);
+    };
+
+    try {
+        // Ejecutar las operaciones matemáticas.
+        const resultado = simulateMasseyOmura(
+            M, eA, eB,
+            currentA, currentB, currentP
+        );
+
+        const {
+            N, dA, dB,
+            paso1, paso2, paso3, recuperado
+        } = resultado;
+
+        // Mostrar cada fase del protocolo.
+        const procedimiento = [
+            "MASSEY-OMURA — CIFRADO EN TRES PASOS",
+            "",
+            "MENSAJE ORIGINAL",
+            "M = " + puntoTexto(M),
+            "Orden del grupo N = " + N,
+            "",
+            "CLAVES PRIVADAS",
+            "Alice: eA = " + eA,
+            "Alice: dA = " + dA,
+            "Bob: eB = " + eB,
+            "Bob: dB = " + dB,
+            "",
+            "Verificación de inversos:",
+            "eA × dA mod N = " + ((eA * dA) % N),
+            "eB × dB mod N = " + ((eB * dB) % N),
+            "",
+            "PASO 1 — ALICE ENVÍA A BOB",
+            "M1 = eA × M",
+            "M1 = " + puntoTexto(paso1),
+            "",
+            "PASO 2 — BOB DEVUELVE A ALICE",
+            "M2 = eB × M1",
+            "M2 = " + puntoTexto(paso2),
+            "",
+            "PASO 3 — ALICE ENVÍA A BOB",
+            "M3 = dA × M2",
+            "M3 = " + puntoTexto(paso3),
+            "",
+            "RECUPERACIÓN — BOB",
+            "M recuperado = dB × M3",
+            "M recuperado = " + puntoTexto(recuperado),
+            "",
+            "CORRECTO: Bob recuperó el mensaje original."
+        ].join('\n');
+
+        mostrarMensaje(procedimiento);
+        drawMasseyOmuraPoints(
+            M,
+            paso1,
+            paso2,
+            paso3,
+            currentP,
+            handlePointClick
+        );
+
+    } catch (error) {
+        clearMasseyOmura();
+
+        mostrarMensaje(
+            "No fue posible completar Massey-Omura:\n" +
+            error.message,
+            true
+        );
+    }
+};
+
+
 const updateAll = () => {
     const inputA = document.getElementById('param-a');
     const inputB = document.getElementById('param-b');
@@ -639,6 +810,7 @@ const updateAll = () => {
     clearAddition(); 
     clearECDH(); 
     clearElGamal();
+    clearMasseyOmura();
 
     updateWeierstrassEquation(currentA, b);
     drawContinuousCurve(currentA, b);
@@ -655,6 +827,13 @@ const updateAll = () => {
         document.getElementById('theory-output').textContent =
             "ElGamal: selecciona primero el punto base G " +
             "y después el mensaje M en la gráfica.";
+
+    } else if (currentSubtopicId === 'massey-simulador') {
+        clearMasseyOmura();
+        document.getElementById('theory-output').textContent =
+            "Massey-Omura: selecciona un punto M " +
+            "de la gráfica para representar el mensaje.";
+
     } else {
         showAdditionResult(null, null, null);
     }

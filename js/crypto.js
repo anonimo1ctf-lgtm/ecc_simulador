@@ -437,3 +437,78 @@ export function decryptElGamal(C1, C2, G, d, a, b, p) {
 
     return M;
 }
+
+
+/**
+ * Simula el protocolo Massey-Omura sobre una curva elíptica.
+ *
+ * M: mensaje representado como punto de la curva.
+ * eA: exponente privado de Alice.
+ * eB: exponente privado de Bob.
+ *
+ * Utiliza inversos modulares respecto al orden
+ * del grupo completo E(Fp).
+ */
+export function simulateMasseyOmura(M, eA, eB, a, b, p) {
+
+    // 1. Validar la curva y el mensaje.
+    validateCurve(a, b, p);
+    pointOrder(M, a, b, p);
+
+    // 2. Obtener el orden del grupo, incluyendo O.
+    const N = findPoints(a, b, p).length + 1;
+
+    // 3. Comprobar que los exponentes sean enteros.
+    if (!Number.isSafeInteger(eA) ||
+        !Number.isSafeInteger(eB) ||
+        eA <= 1 || eA >= N ||
+        eB <= 1 || eB >= N) {
+
+        throw new RangeError(
+            "Los exponentes eA y eB deben ser enteros " +
+            "entre 2 y " + (N - 1) + "."
+        );
+    }
+
+    // 4. Calcular inversos modulares.
+    // Si un exponente no es coprimo con N,
+    // modInverse lanzará un RangeError.
+    const dA = modInverse(eA, N);
+    const dB = modInverse(eB, N);
+
+    // 5. Alice aplica su exponente.
+    const paso1 = multiplyPoint(M, eA, a, p);
+
+    // 6. Bob aplica su exponente.
+    const paso2 = multiplyPoint(paso1, eB, a, p);
+
+    // 7. Alice elimina su exponente.
+    const paso3 = multiplyPoint(paso2, dA, a, p);
+
+    // 8. Bob elimina su exponente y recupera M.
+    const recuperado = multiplyPoint(
+        paso3, dB, a, p
+    );
+
+    // 9. Verificar que el mensaje coincida.
+    if (recuperado === null ||
+        recuperado[0] !== M[0] ||
+        recuperado[1] !== M[1]) {
+
+        throw new Error(
+            "El mensaje recuperado no coincide con el original."
+        );
+    }
+
+    return {
+        N,
+        eA,
+        eB,
+        dA,
+        dB,
+        paso1,
+        paso2,
+        paso3,
+        recuperado
+    };
+}
